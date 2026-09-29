@@ -1,0 +1,30 @@
+/* Thème Éveil Intérieur — à charger APRÈS style.css (pages internes) */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Lora:wght@400;500&display=swap');
+:root{--color-primary:#3b5b45;--color-primary-hover:#243a2d;--color-dark:#243a2d;--color-text:#3d4640;--color-text-light:#6f7a72;--color-border:#e2e6dc;--color-bg:#faf8f2;--radius:999px;--radius-md:12px;--radius-lg:16px;--shadow-md:0 6px 20px rgba(36,58,45,.08);--shadow-lg:0 10px 28px rgba(36,58,45,.12);--gold:#b98a4e;--sage:#e8eee6}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--color-bg)}
+h1,h2,h3,h4{font-family:'Lora',Georgia,serif;font-weight:500;color:var(--color-dark)}
+.btn{border-radius:999px;text-transform:none;letter-spacing:0;font-weight:500}
+.btn-outline{color:var(--color-primary);border-color:var(--color-primary)}
+.btn-outline:hover{background:var(--color-primary);color:#fff}
+.hero-section[style*="min-height"]{background:var(--color-bg)!important}
+.hero-section[style*="min-height"]::before{display:none!important}
+.hero-section:not([style*="min-height"])::after{content:"";position:absolute;inset:0;background:rgba(36,58,45,.55);z-index:0}
+.hero-section:not([style*="min-height"])>*{position:relative;z-index:1}
+.navbar{gap:2rem}.navbar .logo{font-family:'Lora',Georgia,serif;font-size:1.35rem;color:var(--color-dark);text-transform:none;letter-spacing:0}
+.nav-links a{text-transform:none;letter-spacing:0;font-size:.9rem;color:var(--color-text)}
+.nav-links a:hover{color:var(--gold)}
+.module-number{color:var(--gold)}
+.bg-gray-full,.bg-accent-full{background:var(--sage)}
+.module-card,.coaching-card,.auth-card,.audio-player-plugin,.who-card{border-radius:16px;box-shadow:var(--shadow-md);border-color:var(--color-border)}
+.progress-fill{background:linear-gradient(90deg,var(--color-primary),var(--gold))}
+.progress-bar{border-radius:999px;overflow:hidden}
+.auth-form input{border-radius:999px;padding-left:1.1rem}
+.auth-form input:focus{border-color:var(--color-primary);outline:none}
+body:has(.auth-wrapper){background:linear-gradient(160deg,#e8eee6,#faf8f2 60%,#f5dfd0)!important}
+.auth-wrapper::before{display:none!important}
+.footer{background:#243a2d;color:#cdd8cf}
+.footer .logo,.footer a{color:#fff}
+.footer .subtext{color:#cdd8cf}
+.hero-section:not([style*="min-height"]) .navbar .logo,.hero-section:not([style*="min-height"]) .nav-links a{color:#fff}
+.hero-section:not([style*="min-height"]) .btn-outline{color:#fff;border-color:#fff}
+.hero-section:not([style*="min-height"]) .btn-primary{background:var(--gold)}
