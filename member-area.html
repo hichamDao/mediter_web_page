@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Espace Membre | Éveil Intérieur™</title>
+    <meta name="description" content="Votre espace membre Éveil Intérieur™ — suivez vos modules de formation spirituelle." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        .hero-section::before { display: none; }
+        .hero-section { background: linear-gradient(135deg, rgba(27, 176, 206, 0.05), rgba(27, 176, 206, 0.05)); }
+    </style>
+   <!-- <script defer src="script.js"></script>-->
+</head>
+<body>
+    <!-- ===== Member Header ===== -->
+    <header class="hero-section" style="min-height: auto; padding-top: 1.5rem;">
+        <nav class="navbar container">
+            <a href="index.html" class="logo">Éveil Intérieur™</a>
+            <div class="nav-links member-nav">
+                <span id="memberEmail" class="member-email"></span>
+                <a href="#" id="logoutBtn">Déconnexion</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ===== Member Dashboard ===== -->
+    <section class="container section">
+        <div class="text-center mb-3">
+            <h1>Votre espace membre</h1>
+            <p class="subtext">Formation « Retrouvez le calme intérieur en 6 semaines »</p>
+        </div>
+    <!-- ===== Progression ===== -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-info">
+                <span id="currentWeek">Semaine 1</span>
+                <span id="progressText">1 / 6 modules débloqués</span>
+            </div>
+        </div>
+
+    <!-- ===== Modules Grid ===== -->
+        <div class="modules-grid member-modules" id="modulesGrid">
+            <!-- Modules dynamiques via JS -->
+        </div>
+    </section>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Éveil Intérieur™. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

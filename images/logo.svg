@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="tealGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1bb0ce" />
+      <stop offset="100%" style="stop-color:#1691aa" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <circle cx="45" cy="45" r="38" fill="url(#tealGradient)" />
+  <path d="M45 22 C58 32, 58 58, 45 68 C32 58, 32 32, 45 22 Z" fill="white" opacity="0.9" />
+  <circle cx="45" cy="45" r="16" fill="white" />
+  <path d="M45 20 A20 20 0 0 1 65 40" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
+  <path d="M25 40 A20 20 0 0 1 45 20" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
+
+  <g filter="url(#glow)">
+    <circle cx="45" cy="45" r="32" fill="url(#tealGradient)" opacity="0.3" />
+  </g>
+
+  <text x="95" y="55" font-family="Raleway, Arial, sans-serif" font-weight="700" font-size="28" fill="#3d3d3d">
+    Éveil Intérieur™
+  </text>
+
+  <text x="95" y="80" font-family="Raleway, Arial, sans-serif" font-weight="400" font-size="12" fill="#777777">
+    Formation spirituelle
+  </text>
+</svg>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Accès Membre | Éveil Intérieur™</title>
+    <meta name="description" content="Accédez à votre espace membre Éveil Intérieur™ — formation spirituelle en ligne." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        body { background-image: url('images/hero-bg.jpg'); background-size: cover; background-position: center; background-attachment: fixed; }
+        .auth-wrapper::before { content: ''; position: fixed; inset: 0; background: rgba(27, 176, 206, 0.15); z-index: -1; }
+    </style>
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <!-- ===== Login / Register ===== -->
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-header">
+                <img src="images/logo.svg" alt="Éveil Intérieur™" class="auth-logo" />
+                <h2>Accédez à votre espace membre</h2>
+                <p class="subtext">Entrez votre email pour commencer la formation et débloquer vos modules.</p>
+            </div>
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Adresse email</label>
+                    <input type="email" id="email" name="email" placeholder="vous@exemple.com" required />
+                </div>
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required minlength="6" />
+                </div>
+                <button type="submit" class="btn btn-primary aux-exlarge">Accéder à la formation</button>
+            </form>
+            <div class="auth-footer">
+                <p class="subtext small">En accédant à votre espace, vous démarrez automatiquement la formation sur 6 semaines. Un module est débloqué chaque semaine.</p>
+                <a href="index.html" class="btn btn-outline">← Retour au site</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
