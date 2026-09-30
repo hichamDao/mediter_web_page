@@ -186,15 +186,31 @@ class EmailForm {
 
 /* ===== Plugin: Member Area / Module Unlocking ===== */
 const MODULES = [
-    { id: 1, title: "Poser le silence et apprendre à s'arrêter", subtitle: "Calmer le mental et créer un espace intérieur", img: "images/course-beginner.jpg", href: "lesson.html?m=1" },
-    { id: 2, title: "Écouter son corps et ses émotions", subtitle: "Reconnectez-vous à vos ressenti·e·s", img: "images/course-sleep.jpg", href: "lesson.html?m=2" },
-    { id: 3, title: "Reconnaître sa voix intérieure et son intuition", subtitle: "Distinguer intuition et mental", img: "images/course-relaxation.jpg", href: "lesson.html?m=3" },
-    { id: 4, title: "Lâcher ce qui pèse, pardonner, alléger", subtitle: "Libérer l'énergie bloquée", img: "images/course-energy.jpg", href: "lesson.html?m=4" },
-    { id: 5, title: "Cultiver la gratitude et la présence", subtitle: "Intégrer la gratitude au quotidien", img: "images/feature-meditation.jpg", href: "lesson.html?m=5" },
-    { id: 6, title: "Construire sa pratique durable", subtitle: "Créer un rituel personnel", img: "images/feature-responsive.jpg", href: "lesson.html?m=6" }
+    { id: 1, title: "Poser le silence et apprendre à s'arrêter", subtitle: "Calmer le mental et créer un espace intérieur", img: "images/card-meditation.jpg", href: "lesson.html?m=1" },
+    { id: 2, title: "Écouter son corps et ses émotions", subtitle: "Reconnectez-vous à vos ressenti·e·s", img: "images/card-developpement.jpg", href: "lesson.html?m=2" },
+    { id: 3, title: "Reconnaître sa voix intérieure et son intuition", subtitle: "Distinguer intuition et mental", img: "images/card-coaching.jpg", href: "lesson.html?m=3" },
+    { id: 4, title: "Lâcher ce qui pèse, pardonner, alléger", subtitle: "Libérer l'énergie bloquée", img: "images/card-retraites.jpg", href: "lesson.html?m=4" },
+    { id: 5, title: "Cultiver la gratitude et la présence", subtitle: "Intégrer la gratitude au quotidien", img: "images/home-mission.jpg", href: "lesson.html?m=5" },
+    { id: 6, title: "Construire sa pratique durable", subtitle: "Créer un rituel personnel", img: "images/module-6.jpg", href: "lesson.html?m=6" }
 ];
 
 const DAYS_PER_MODULE = 7;
+/* Séance de coaching n (1..3) débloquée à partir de la semaine indiquée (cf. texte des séances) */
+const COACHING_WEEKS = [2, 4, 6];
+const COACHING_INFO = [
+    { id: 1, title: "Lever les blocages des premiers jours", subtitle: "Identifier votre blocage et construire un plan pour 7 jours", img: "images/card-coaching.jpg", href: "lesson.html?c=1" },
+    { id: 2, title: "Traverser les émotions qui remontent", subtitle: "Les accueillir calmement quand on commence à lâcher prise", img: "images/card-developpement.jpg", href: "lesson.html?c=2" },
+    { id: 3, title: "Ajuster votre rituel pour qu'il dure", subtitle: "Faire le bilan et stabiliser une pratique adaptée à votre vie", img: "images/card-retraites.jpg", href: "lesson.html?c=3" }
+];
+/* Retourne { email, daysElapsed, currentWeek } ou null si non connecté */
+function getMemberWeek() {
+    try {
+        const d = JSON.parse(localStorage.getItem('eveilInterieur_member'));
+        if (!d || !d.startDate) return null;
+        const daysElapsed = Math.floor((Date.now() - new Date(d.startDate).getTime()) / 86400000);
+        return { email: d.email, daysElapsed, currentWeek: Math.min(Math.floor(daysElapsed / 7) + 1, 6) };
+    } catch { return null; }
+}
 const TOTAL_MODULES = 6;
 
 class MemberArea {
@@ -263,7 +279,8 @@ class MemberArea {
 
         grid.innerHTML = MODULES.map(mod => {
             const isUnlocked = mod.id <= this.member.currentWeek;
-            const isCoaching = [2, 4, 6].includes(mod.id);
+            const coachingIdx = COACHING_WEEKS.indexOf(mod.id);
+            const isCoaching = coachingIdx !== -1;
             const nextUnlock = !isUnlocked && mod.id === this.member.currentWeek + 1;
             const daysRemaining = nextUnlock
                 ? DAYS_PER_MODULE - (this.member.daysElapsed % DAYS_PER_MODULE)
@@ -277,7 +294,7 @@ class MemberArea {
                         ${isUnlocked
                             ? `<h3>${mod.title}</h3>
                                <p class="subtext">${mod.subtitle}</p>
-                               ${isCoaching ? '<span class="coaching-badge">Coaching inclus</span>' : ''}
+                               ${isCoaching ? `<span class="coaching-badge">Séance de coaching ${coachingIdx + 1} incluse</span>` : ''}
                                <a href="${mod.href}" class="btn btn-primary btn-small">Commencer</a>`
                             : `<h3>${mod.title}</h3>
                                <p class="subtext">${mod.subtitle}</p>
@@ -289,6 +306,23 @@ class MemberArea {
                 </div>
             `;
         }).join('');
+
+        const cg = document.getElementById('coachingGrid');
+        if (cg) {
+            cg.innerHTML = COACHING_INFO.map((c, i) => {
+                const wk = COACHING_WEEKS[i];
+                const ok = this.member.currentWeek >= wk;
+                return `<div class="module-card ${ok ? 'unlocked' : 'locked'}">
+                    <img src="${c.img}" alt="${c.title}" class="module-img" />
+                    <div class="module-card__content">
+                        <span class="module-number">${c.id}</span>
+                        <h3>Séance ${c.id} : ${c.title}</h3>
+                        <p class="subtext">${c.subtitle}</p>
+                        ${ok ? `<a href="${c.href}" class="btn btn-primary btn-small">Commencer</a>`
+                             : `<span class="lock-icon">🔒 Semaine ${wk}</span><button class="btn btn-small" disabled>Verrouillé</button>`}
+                    </div></div>`;
+            }).join('');
+        }
 
         const emailEl = this.container.querySelector?.('#memberEmail') || document.getElementById('memberEmail');
         if (emailEl && this.member.email) {

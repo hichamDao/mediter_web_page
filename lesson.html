@@ -15,13 +15,13 @@
         .hero-section::before { display: none; }
         .hero-section { background: linear-gradient(135deg, rgba(27, 176, 206, 0.03), rgba(27, 176, 206, 0.03)); }
     </style>
+    <script defer src="lessons-data.js"></script>
     <script defer src="script.js"></script>
 </head>
 <body>
-    <!-- ===== Navbar ===== -->
     <header class="hero-section" style="min-height: auto; padding-top: 1.5rem;">
         <nav class="navbar container">
-            <a href="index.html" class="logo">Éveil Intérieur™</a>
+            <a href="index.html" class="logo">Éveil Intérieur</a>
             <div class="nav-links">
                 <a href="member-area.html">Mon espace</a>
                 <a href="#" id="logoutBtn">Déconnexion</a>
@@ -29,142 +29,121 @@
         </nav>
     </header>
 
-    <!-- ===== Module Header ===== -->
-    <section class="container section">
+    <section class="container section" style="padding-bottom:1rem">
         <div class="text-center">
             <span class="module-number" id="moduleNumber">1</span>
-            <h1 id="moduleTitle">Poser le silence et apprendre à s'arrêter</h1>
-            <p class="subtext" id="moduleSubtitle">Apprenez à calmer le mental et à créer un espace intérieur de paix.</p>
+            <p class="eyebrow-label" id="moduleKicker"></p>
+            <h1 id="moduleTitle"></h1>
+            <p class="subtext" id="moduleSubtitle"></p>
         </div>
+        <div class="module-nav" id="moduleNav"></div>
     </section>
 
-    <!-- ===== Module Navigation ===== -->
-    <section class="container section">
-        <div class="module-nav">
-            <a href="lesson.html?m=1" class="btn btn-outline btn-small">Module 1</a>
-            <a href="lesson.html?m=2" class="btn btn-outline btn-small coaching-link" data-module="2">Module 2 (Coaching)</a>
-            <a href="lesson.html?m=3" class="btn btn-outline btn-small">Module 3</a>
-            <a href="lesson.html?m=4" class="btn btn-outline btn-small coaching-link" data-module="4">Module 4 (Coaching)</a>
-            <a href="lesson.html?m=5" class="btn btn-outline btn-small">Module 5</a>
-            <a href="lesson.html?m=6" class="btn btn-outline btn-small coaching-link" data-module="6">Module 6 (Coaching)</a>
-        </div>
+    <section class="container section" style="padding-top:0">
+        <div class="lesson-tabs" id="lessonTabs"></div>
+        <article class="lesson-article" id="lessonArticle"></article>
+        <div class="lesson-pager" id="lessonPager"></div>
     </section>
 
-    <!-- ===== Audio Player Plugin ===== -->
-    <section class="container section">
-        <div class="text-center mb-3">
-            <h2>Méditation guidée — Session 1</h2>
-            <p class="subtext">15 minutes pour calmer le mental et trouver le silence intérieur</p>
-        </div>
-        <div class="audio-player-plugin" data-audio="ambiance2.mp3">
-            <img src="images/audio-ambiance2.jpg" alt="Session 1" class="audio-player__art" />
-            <div class="audio-player__body">
-                <div class="audio-player__title">Méditation : Poser le silence</div>
-                <div class="audio-player__meta">15 min • Guide audio</div>
-                <audio class="audio-player__element" preload="none">
-                    <source src="ambiance2.mp3" type="audio/mpeg" />
-                    Votre navigateur ne supporte pas la lecture audio.
-                </audio>
-                <div class="audio-player__controls">
-                    <button class="audio-control audio-play">▶</button>
-                    <div class="audio-progress">
-                        <div class="audio-progress__filled"></div>
-                    </div>
-                    <div class="audio-time">0:00 / 15:00</div>
-                    <button class="audio-control audio-volume">🔊</button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ===== 2 Columns Lesson Content ===== -->
-    <section class="container section">
-        <div class="columns-2-lesson">
-            <div class="lesson-content">
-                <h2>Enseignement du module</h2>
-                <p>Le silence n'est pas l'absence de bruit, c'est l'espace que vous créez entre vous et vos pensées. Apprenez à poser ce silence intérieur en 5 minutes.</p>
-
-                <h3>Pratique de la semaine</h3>
-                <p>Prenez 5 minutes chaque matin pour simplement vous asseoir. Laissez les pensées passer comme des nuages, sans vous y attacher.</p>
-
-                <h3>Carnet de pratique</h3>
-                <p>Notez vos ressentis chaque jour dans votre carnet. Qu'avez-vous remarqué ? Que sont-vous devenu·e·s aujourd'hui ?</p>
-            </div>
-            <div>
-                <img src="images/lesson-img.jpg" alt="Session méditation" style="width:100%; border-radius: var(--radius-md); box-shadow: var(--shadow-md);" />
-            </div>
-        </div>
-    </section>
-
-    <!-- ===== Coaching Preview ===== -->
-    <section class="bg-gray-full section-divider">
+    <section class="bg-gray-full section-divider" id="coachingPreview" hidden>
         <div class="container text-center">
             <div class="coaching-card">
-                <h2>Prochaine séance de coaching</h2>
-                <p class="subtext">Semaine 2 — Lever les blocages des premiers jours</p>
-                <p>Des outils concrets pour franchir les premiers obstacles de la pratique quotidienne.</p>
-                <a href="lesson.html?m=2" class="btn btn-primary coaching-link" data-module="2">Accéder au coaching</a>
+                <h2 id="cpTitle"></h2>
+                <p class="subtext" id="cpSub"></p>
+                <a href="#" class="btn btn-primary" id="cpLink">Commencer la séance</a>
             </div>
         </div>
     </section>
 
-    <!-- ===== Footer ===== -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-brand">
-                    <a href="index.html" class="logo">Éveil Intérieur™</a>
-                    <p class="subtext">Votre accompagnement spirituel en ligne.</p>
+                    <a href="index.html" class="logo">Éveil Intérieur</a>
+                    <p class="subtext">Votre accompagnement bien-être en ligne.</p>
                 </div>
                 <div class="footer-links">
-                    <a href="index.html#method">Méthode</a>
+                    <a href="index.html">Accueil</a>
                     <a href="member-area.html">Espace membre</a>
-                    <a href="index.html#faq">FAQ</a>
                 </div>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Éveil Intérieur™. Tous droits réservés.</p>
-            </div>
+            <div class="footer-bottom"><p>&copy; 2026 Éveil Intérieur. Tous droits réservés.</p></div>
         </div>
     </footer>
 
     <script>
-        const MODULE_DATA = {
-            1: { title: "Poser le silence et apprendre à s'arrêter", subtitle: "Apprenez à calmer le mental et à créer un espace intérieur de paix." },
-            2: { title: "Écouter son corps et ses émotions", subtitle: "Reconnectez-vous à vos ressenti·e·s physiques et émotionnels." },
-            3: { title: "Reconnaître sa voix intérieure et son intuition", subtitle: "Apprenez à distinguer votre intuition de votre mental." },
-            4: { title: "Lâcher ce qui pèse, pardonner, alléger", subtitle: "Libérez l'énergie bloquée par le pardon." },
-            5: { title: "Cultiver la gratitude et la présence", subtitle: "Intégrez la gratitude dans votre routine quotidienne." },
-            6: { title: "Construire sa pratique durable", subtitle: "Créez un rituel personnel qui vous accompagne pour la vie." }
-        };
+    document.addEventListener('DOMContentLoaded', () => {
+        const $ = id => document.getElementById(id);
+        const st = getMemberWeek();
+        if (!st) { location.href = 'login.html'; return; }
+        const week = st.currentWeek;
+        const q = new URLSearchParams(location.search);
+        const coachN = parseInt(q.get('c'));
+        const isCoach = coachN >= 1 && coachN <= 3;
+        const modId = Math.min(Math.max(parseInt(q.get('m')) || 1, 1), 6);
+        const kindLabel = { enseignement: 'Enseignement', pratique: 'Pratique de la semaine', meditation: 'Méditation guidée', coaching: 'Séance' };
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const moduleId = parseInt(urlParams.get('m')) || 1;
+        // Accès verrouillé -> retour à l'espace membre
+        if ((isCoach && week < COACHING_WEEKS[coachN - 1]) || (!isCoach && modId > week)) { location.href = 'member-area.html'; return; }
 
-        const memberRaw = localStorage.getItem('eveilInterieur_member');
-        if (!memberRaw) {
-            window.location.href = 'login.html';
-        } else {
-            try {
-                const data = JSON.parse(memberRaw);
-                const daysElapsed = Math.floor((Date.now() - new Date(data.startDate).getTime()) / (1000 * 60 * 60 * 24));
-                const currentWeek = Math.min(Math.floor(daysElapsed / 7) + 1, 6);
-                if (moduleId > currentWeek) {
-                    window.location.href = 'member-area.html';
-                }
-            } catch {
-                window.location.href = 'login.html';
-            }
+        // Navigation Modules + Coaching
+        $('moduleNav').innerHTML =
+            MODULES.map(m => chip(`lesson.html?m=${m.id}`, `Module ${m.id}`, m.id <= week, !isCoach && m.id === modId)).join('') +
+            COACHING_INFO.map((c, i) => chip(c.href, `Coaching ${c.id}`, week >= COACHING_WEEKS[i], isCoach && c.id === coachN)).join('');
+        function chip(href, label, ok, on) {
+            return ok ? `<a href="${href}" class="btn btn-outline btn-small ${on ? 'is-on' : ''}">${label}</a>`
+                      : `<span class="btn btn-outline btn-small is-locked" title="Pas encore débloqué">🔒 ${label}</span>`;
         }
 
-        const md = MODULE_DATA[moduleId];
-        if (md) {
-            document.getElementById('moduleNumber').textContent = moduleId;
-            document.getElementById('moduleTitle').textContent = md.title;
-            document.getElementById('moduleSubtitle').textContent = md.subtitle;
-            document.title = `Module ${moduleId} | Éveil Intérieur™`;
+        if (isCoach) {
+            const info = COACHING_INFO[coachN - 1], s = COACHING_SESSIONS[coachN - 1];
+            document.title = `Coaching ${coachN} | Éveil Intérieur`;
+            $('moduleNumber').textContent = coachN;
+            $('moduleKicker').textContent = `Séance de coaching · semaine ${COACHING_WEEKS[coachN - 1]}`;
+            $('moduleTitle').textContent = info.title;
+            $('moduleSubtitle').textContent = info.subtitle;
+            $('lessonArticle').innerHTML = `<h2>${s.title}</h2>${s.html}`;
+            const next = COACHING_INFO[coachN];
+            $('lessonPager').innerHTML = `<a class="btn btn-outline" href="member-area.html">← Mon espace</a>` +
+                (next && week >= COACHING_WEEKS[coachN] ? `<a class="btn btn-primary" href="${next.href}">Séance suivante →</a>` : '');
+            return;
         }
+
+        const md = MODULES[modId - 1], lessons = LESSONS[modId];
+        let li = Math.min(Math.max(parseInt(q.get('l')) || 0, 0), lessons.length - 1);
+        document.title = `Module ${modId} | Éveil Intérieur`;
+        $('moduleNumber').textContent = modId;
+        $('moduleKicker').textContent = `Semaine ${modId}`;
+        $('moduleTitle').textContent = md.title;
+        $('moduleSubtitle').textContent = md.subtitle;
+
+        function show(i) {
+            li = i; const l = lessons[i];
+            $('lessonTabs').innerHTML = lessons.map((x, k) =>
+                `<button class="lesson-tab ${k === i ? 'on' : ''}" data-i="${k}"><b>${k + 1}</b> ${kindLabel[x.kind]}</button>`).join('');
+            $('lessonArticle').innerHTML = `<h2>${l.title}</h2>${l.html}`;
+            const last = i === lessons.length - 1;
+            const nextMod = modId < 6 && modId + 1 <= week ? `lesson.html?m=${modId + 1}` : 'member-area.html';
+            $('lessonPager').innerHTML =
+                (i > 0 ? `<button class="btn btn-outline" data-i="${i - 1}">← Précédent</button>` : '<span></span>') +
+                (!last ? `<button class="btn btn-primary" data-i="${i + 1}">Suivant : ${kindLabel[lessons[i + 1].kind]} →</button>`
+                       : `<a class="btn btn-primary" href="${nextMod}">${nextMod === 'member-area.html' ? 'Terminer, retour à mon espace' : 'Module suivant →'}</a>`);
+            history.replaceState(null, '', `lesson.html?m=${modId}&l=${i}`);
+            window.scrollTo({ top: $('lessonTabs').offsetTop - 20, behavior: 'smooth' });
+        }
+        document.body.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) show(+b.dataset.i); });
+        show(li);
+        window.scrollTo(0, 0);
+
+        // Séance de coaching liée à ce module (semaines 2, 4, 6)
+        const ci = COACHING_WEEKS.indexOf(modId);
+        if (ci !== -1) {
+            $('coachingPreview').hidden = false;
+            $('cpTitle').textContent = `Séance de coaching ${ci + 1}`;
+            $('cpSub').textContent = COACHING_INFO[ci].title;
+            $('cpLink').href = COACHING_INFO[ci].href;
+        }
+    });
     </script>
 </body>
 </html>
-
