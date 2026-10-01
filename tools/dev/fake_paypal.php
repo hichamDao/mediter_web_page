@@ -14,7 +14,7 @@ if (preg_match('#^/v2/checkout/orders/([^/]+)/capture$#', $p, $m)) {
     $val = $mode === 'wrong_amount' ? '1.00' : $pu['amount']['value'];
     $status = $mode === 'declined' ? 'DECLINED' : 'COMPLETED';
     echo json_encode(['id' => $m[1], 'status' => $status, 'payer' => ['email_address' => 'buyer@example.com'],
-        'purchase_units' => [['custom_id' => $pu['custom_id'], 'payments' => ['captures' => [['id' => 'CAP' . $m[1], 'status' => $status,
+        'purchase_units' => [['reference_id' => 'default', 'payments' => ['captures' => [['id' => 'CAP' . $m[1], 'status' => $status, 'custom_id' => $pu['custom_id'],
         'amount' => ['currency_code' => $pu['amount']['currency_code'], 'value' => $val]]]]]]]); exit;
 }
 http_response_code(404); echo '{}';

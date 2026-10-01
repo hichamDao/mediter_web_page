@@ -275,13 +275,16 @@ class MemberArea {
             });
             paypal.Buttons({
                 style: { layout: 'vertical', shape: 'pill', label: 'pay' },
-                createOrder: async () => (await Api.post('paypal.php?action=create')).id,
+                createOrder: async () => {
+                    try { msg.textContent = ''; return (await Api.post('paypal.php?action=create')).id; }
+                    catch (e) { msg.textContent = e.message + (e.data && e.data.detail ? ' (' + e.data.detail + ')' : ''); console.error('PayPal create', e); throw e; }
+                },
                 onApprove: async data => {
                     msg.textContent = 'Validation du paiement…';
                     try { await Api.post('paypal.php?action=capture', { orderID: data.orderID }); location.reload(); }
-                    catch (e) { msg.textContent = e.message + ' — si vous avez été débité, contactez-nous.'; }
+                    catch (e) { msg.textContent = e.message + (e.data && e.data.detail ? ' (' + e.data.detail + ')' : '') + ' — si vous avez été débité, contactez-nous.'; console.error('PayPal capture', e); }
                 },
-                onError: () => { msg.textContent = 'Le paiement a échoué. Réessayez ou contactez-nous.'; }
+                onError: err => { console.error('PayPal SDK', err); if (!msg.textContent) msg.textContent = 'Le paiement a échoué. Réessayez ou contactez-nous.'; }
             }).render('#paypal-button-container');
         } catch (e) { msg.textContent = 'Le paiement PayPal est momentanément indisponible.'; }
     }
