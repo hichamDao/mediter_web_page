@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Génère lessons-data.js à partir des dossiers « Module N … » et « Vos 3 séances de coaching ».
+"""Génère api/private/lessons.json (servi uniquement aux membres payants par api/lesson.php) à partir des dossiers « Module N … » et « Vos 3 séances de coaching ».
 Usage : python3 tools/build_lessons.py   (à relancer après chaque modification d'un fichier de leçon)"""
 import glob, html, json, os, re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -53,8 +53,6 @@ for f in sorted(files, key=lambda p: int(re.match(r"(\d+)_", os.path.basename(p)
     item = {"n": n, "kind": kind_of(os.path.basename(f)), "title": title, "html": body}
     if n >= 19: coaching.append(item)
     else: modules[module_of(n)].append(item)
-open(os.path.join(ROOT, "lessons-data.js"), "w", encoding="utf-8").write(
-    "/* Fichier généré par tools/build_lessons.py — ne pas modifier à la main */\n"
-    "const LESSONS = " + json.dumps(modules, ensure_ascii=False) + ";\n"
-    "const COACHING_SESSIONS = " + json.dumps(coaching, ensure_ascii=False) + ";\n")
-print({k: [(x['n'], x['kind']) for x in v] for k, v in modules.items()}, [c['n'] for c in coaching])
+out = os.path.join(ROOT, "api", "private", "lessons.json")
+open(out, "w", encoding="utf-8").write(json.dumps({"modules": modules, "coaching": coaching}, ensure_ascii=False))
+print("écrit :", out, {k: len(v) for k, v in modules.items()}, len(coaching), "séances de coaching")

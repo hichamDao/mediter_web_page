@@ -15,7 +15,8 @@
         .hero-section::before { display: none; }
         .hero-section { background: linear-gradient(135deg, rgba(27, 176, 206, 0.05), rgba(27, 176, 206, 0.05)); }
     </style>
-   <script defer src="script.js"></script>
+   <script defer src="js/api.js"></script>
+    <script defer src="script.js"></script>
 </head>
 <body>
     <!-- ===== Member Header ===== -->
@@ -24,10 +25,22 @@
             <a href="index.html" class="logo">Éveil Intérieur</a>
             <div class="nav-links member-nav">
                 <span id="memberEmail" class="member-email"></span>
+                <a href="carnet.html">Mon carnet</a>
+                <a href="admin.html" id="adminLink" hidden>Administration</a>
                 <a href="#" id="logoutBtn">Déconnexion</a>
             </div>
         </nav>
     </header>
+
+    <!-- ===== Paiement PayPal (visible tant que la formation n'est pas débloquée) ===== -->
+    <section class="container section" id="payBox" hidden style="padding-bottom:0">
+        <div class="coaching-card" style="max-width:560px;margin:0 auto">
+            <h2>Débloquez votre formation</h2>
+            <p class="subtext">Accès aux 6 modules (un par semaine) et aux 3 séances de coaching.<br>Paiement unique : <strong id="payPrice">…</strong></p>
+            <div id="paypal-button-container" style="max-width:340px;margin:1.2rem auto 0"></div>
+            <p id="payMsg" class="subtext small" role="status"></p>
+        </div>
+    </section>
 
     <!-- ===== Member Dashboard ===== -->
     <section class="container section">

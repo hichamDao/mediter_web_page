@@ -11,37 +11,48 @@
     <link rel="icon" href="images/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="theme.css" />
-    <style>
-        body { background-image: url('images/hero-bg.jpg'); background-size: cover; background-position: center; background-attachment: fixed; }
-        .auth-wrapper::before { content: ''; position: fixed; inset: 0; background: rgba(27, 176, 206, 0.15); z-index: -1; }
-    </style>
-    <script defer src="script.js"></script>
+    <style>.auth-tabs{display:flex;gap:.5rem;margin:1rem 0 1.2rem;justify-content:center}.auth-tabs button{font:inherit;border:1px solid var(--color-border);background:#fff;padding:.5rem 1.2rem;border-radius:999px;cursor:pointer}.auth-tabs button.on{background:var(--color-primary);color:#fff;border-color:var(--color-primary)}.auth-error{color:#b3261e;font-size:.9rem;min-height:1.3rem;margin:.5rem 0}.hp{position:absolute;left:-9999px}</style>
+    <script defer src="js/api.js"></script>
 </head>
 <body>
-    <!-- ===== Login / Register ===== -->
-    <div class="auth-wrapper">
-        <div class="auth-card">
-            <div class="auth-header">
-                <div class="logo" style="font-family:Lora,serif;font-size:1.6rem;color:#243a2d;margin-bottom:1rem">Éveil Intérieur</div>
-                <h2>Accédez à votre espace membre</h2>
-                <p class="subtext">Entrez votre email pour commencer la formation et débloquer vos modules.</p>
-            </div>
-            <form id="loginForm" class="auth-form">
-                <div class="form-group">
-                    <label for="email">Adresse email</label>
-                    <input type="email" id="email" name="email" placeholder="vous@exemple.com" required />
-                </div>
-                <div class="form-group">
-                    <label for="password">Mot de passe</label>
-                    <input type="password" id="password" name="password" placeholder="••••••••" required minlength="6" />
-                </div>
-                <button type="submit" class="btn btn-primary aux-exlarge">Accéder à la formation</button>
-            </form>
-            <div class="auth-footer">
-                <p class="subtext small">En accédant à votre espace, vous démarrez automatiquement la formation sur 6 semaines. Un module est débloqué chaque semaine.</p>
-                <a href="index.html" class="btn btn-outline">← Retour au site</a>
-            </div>
+    <div class="auth-wrapper"><div class="auth-card">
+        <div class="auth-header">
+            <div class="logo" style="font-family:Lora,serif;font-size:1.6rem;color:#243a2d;margin-bottom:1rem">Éveil Intérieur</div>
+            <h2 id="title">Accédez à votre espace membre</h2>
+            <div class="auth-tabs"><button type="button" id="tabLogin" class="on">Se connecter</button><button type="button" id="tabReg">Créer un compte</button></div>
         </div>
-    </div>
-</body>
-</html>
+        <form id="authForm" class="auth-form" novalidate>
+            <div class="form-group" id="nameRow" hidden><label for="name">Prénom et nom</label><input id="name" autocomplete="name" maxlength="120" /></div>
+            <div class="form-group"><label for="email">Adresse email</label><input type="email" id="email" autocomplete="email" placeholder="vous@exemple.com" required /></div>
+            <div class="form-group"><label for="password">Mot de passe <small id="pwHint" hidden>(8 caractères minimum)</small></label><input type="password" id="password" autocomplete="current-password" required minlength="8" /></div>
+            <p class="auth-error" id="err" role="alert"></p>
+            <button type="submit" class="btn btn-primary aux-exlarge" id="submitBtn">Se connecter</button>
+        </form>
+        <div class="auth-footer"><p class="subtext small">Après votre inscription, débloquez la formation en 6 semaines par un paiement PayPal sécurisé. Un module est ensuite débloqué chaque semaine.</p>
+            <a href="index.html" class="btn btn-outline">← Retour au site</a></div>
+    </div></div>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const $ = id => document.getElementById(id); let mode = 'login';
+    try { const me = await Api.me(); if (me.loggedIn) { location.href = 'member-area.html'; return; } } catch {}
+    function setMode(m) {
+        mode = m; $('tabLogin').classList.toggle('on', m === 'login'); $('tabReg').classList.toggle('on', m === 'register');
+        $('nameRow').hidden = m === 'login'; $('pwHint').hidden = m === 'login';
+        $('password').autocomplete = m === 'login' ? 'current-password' : 'new-password';
+        $('submitBtn').textContent = m === 'login' ? 'Se connecter' : 'Créer mon compte'; $('err').textContent = '';
+    }
+    $('tabLogin').onclick = () => setMode('login'); $('tabReg').onclick = () => setMode('register');
+    if (location.hash === '#register') setMode('register');
+    $('authForm').addEventListener('submit', async e => {
+        e.preventDefault(); $('err').textContent = ''; $('submitBtn').disabled = true;
+        try {
+            const body = { email: $('email').value.trim(), password: $('password').value };
+            if (mode === 'register') body.name = $('name').value.trim();
+            await Api.post('auth.php?action=' + mode, body);
+            location.href = 'member-area.html';
+        } catch (er) { $('err').textContent = er.message; }
+        $('submitBtn').disabled = false;
+    });
+});
+</script>
+</body></html>

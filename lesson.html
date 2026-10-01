@@ -15,7 +15,7 @@
         .hero-section::before { display: none; }
         .hero-section { background: linear-gradient(135deg, rgba(27, 176, 206, 0.03), rgba(27, 176, 206, 0.03)); }
     </style>
-    <script defer src="lessons-data.js"></script>
+    <script defer src="js/api.js"></script>
     <script defer src="script.js"></script>
 </head>
 <body>
@@ -24,6 +24,7 @@
             <a href="index.html" class="logo">Éveil Intérieur</a>
             <div class="nav-links">
                 <a href="member-area.html">Mon espace</a>
+                <a href="carnet.html">Mon carnet</a>
                 <a href="#" id="logoutBtn">Déconnexion</a>
             </div>
         </nav>
@@ -72,11 +73,12 @@
     </footer>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         const $ = id => document.getElementById(id);
-        const st = getMemberWeek();
-        if (!st) { location.href = 'login.html'; return; }
-        const week = st.currentWeek;
+        let st; try { st = await Api.me(true); } catch { st = null; }
+        if (!st || !st.loggedIn) { location.href = 'login.html'; return; }
+        const week = st.paid ? st.currentWeek : 0;
+        $('logoutBtn').addEventListener('click', e => { e.preventDefault(); Api.logout(); });
         const q = new URLSearchParams(location.search);
         const coachN = parseInt(q.get('c'));
         const isCoach = coachN >= 1 && coachN <= 3;
@@ -96,7 +98,8 @@
         }
 
         if (isCoach) {
-            const info = COACHING_INFO[coachN - 1], s = COACHING_SESSIONS[coachN - 1];
+            const info = COACHING_INFO[coachN - 1];
+            let s; try { s = (await Api.get('lesson.php?c=' + coachN)).lessons[0]; } catch { location.href = 'member-area.html'; return; }
             document.title = `Coaching ${coachN} | Éveil Intérieur`;
             $('moduleNumber').textContent = coachN;
             $('moduleKicker').textContent = `Séance de coaching · semaine ${COACHING_WEEKS[coachN - 1]}`;
@@ -109,7 +112,8 @@
             return;
         }
 
-        const md = MODULES[modId - 1], lessons = LESSONS[modId];
+        const md = MODULES[modId - 1];
+        let lessons; try { lessons = (await Api.get('lesson.php?m=' + modId)).lessons; } catch { location.href = 'member-area.html'; return; }
         let li = Math.min(Math.max(parseInt(q.get('l')) || 0, 0), lessons.length - 1);
         document.title = `Module ${modId} | Éveil Intérieur`;
         $('moduleNumber').textContent = modId;

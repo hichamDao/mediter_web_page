@@ -202,191 +202,88 @@ const COACHING_INFO = [
     { id: 2, title: "Traverser les émotions qui remontent", subtitle: "Les accueillir calmement quand on commence à lâcher prise", img: "images/card-developpement.jpg", href: "lesson.html?c=2" },
     { id: 3, title: "Ajuster votre rituel pour qu'il dure", subtitle: "Faire le bilan et stabiliser une pratique adaptée à votre vie", img: "images/card-retraites.jpg", href: "lesson.html?c=3" }
 ];
-/* Retourne { email, daysElapsed, currentWeek } ou null si non connecté */
-function getMemberWeek() {
-    try {
-        const d = JSON.parse(localStorage.getItem('eveilInterieur_member'));
-        if (!d || !d.startDate) return null;
-        const daysElapsed = Math.floor((Date.now() - new Date(d.startDate).getTime()) / 86400000);
-        return { email: d.email, daysElapsed, currentWeek: Math.min(Math.floor(daysElapsed / 7) + 1, 6) };
-    } catch { return null; }
-}
 const TOTAL_MODULES = 6;
 
 class MemberArea {
-    constructor(container) {
-        this.container = container;
-        this.init();
+    constructor(container) { this.container = container; this.init(); }
+
+    async init() {
+        let me = null;
+        try { me = await Api.me(true); } catch { /* API indisponible */ }
+        if (!me || !me.loggedIn) { window.location.href = 'login.html'; return; }
+        this.member = me;
+        this.render();
+        const lo = document.getElementById('logoutBtn');
+        if (lo) lo.addEventListener('click', e => { e.preventDefault(); Api.logout(); });
+        if (!me.paid) this.initPayPal();
     }
 
-    init() {
-        const member = this.getMemberData();
-        if (!member) {
-            window.location.href = 'login.html';
-            return;
-        }
-
-        this.member = member;
-        this.updateProgressBar();
-        this.renderModules();
-        this.bindLogout();
-        this.bindCoachingAccess();
+    render() {
+        const m = this.member, paid = m.paid;
+        const fill = document.getElementById('progressFill');
+        if (fill) fill.style.width = paid ? `${(m.currentWeek / TOTAL_MODULES) * 100}%` : '0%';
+        const w = document.getElementById('currentWeek'), t = document.getElementById('progressText');
+        if (w) w.textContent = paid ? `Semaine ${m.currentWeek}` : 'Formation non débloquée';
+        if (t) t.textContent = paid ? `${m.currentWeek} / ${TOTAL_MODULES} modules débloqués` : 'Paiement requis';
+        const pb = document.getElementById('payBox'); if (pb) pb.hidden = paid;
+        const em = document.getElementById('memberEmail'); if (em) em.textContent = m.name || m.email;
+        const adm = document.getElementById('adminLink'); if (adm) adm.hidden = m.role !== 'admin';
+        this.renderModules(); this.renderCoaching();
     }
 
-    getMemberData() {
-        const data = localStorage.getItem('eveilInterieur_member');
-        if (!data) return null;
-
-        try {
-            const parsed = JSON.parse(data);
-            const daysElapsed = Math.floor((Date.now() - new Date(parsed.startDate).getTime()) / (1000 * 60 * 60 * 24));
-            const currentWeek = Math.min(Math.floor(daysElapsed / DAYS_PER_MODULE) + 1, TOTAL_MODULES);
-            return {
-                ...parsed,
-                daysElapsed,
-                currentWeek,
-                weeksRemaining: Math.max(TOTAL_MODULES - currentWeek, 0)
-            };
-        } catch {
-            return null;
-        }
-    }
-
-    getUnlockedModules() {
-        const week = this.member.currentWeek;
-        return MODULES.filter(m => m.id <= week);
-    }
-
-    updateProgressBar() {
-        const fill = this.container.querySelector('#progressFill');
-        const weekEl = this.container.querySelector('#currentWeek');
-        const textEl = this.container.querySelector('#progressText');
-
-        if (fill) {
-            const percent = (this.member.currentWeek / TOTAL_MODULES) * 100;
-            fill.style.width = `${percent}%`;
-        }
-
-        if (weekEl) weekEl.textContent = `Semaine ${this.member.currentWeek}`;
-        if (textEl) textEl.textContent = `${this.member.currentWeek} / ${TOTAL_MODULES} modules débloqués`;
+    card(img, num, title, subtitle, badge, state) {
+        // state : { ok, wait }  wait = libellé de verrouillage
+        const cta = state.ok ? `<a href="${state.href}" class="btn btn-primary btn-small">Commencer</a>`
+            : (this.member.paid ? `<span class="lock-icon">🔒 ${state.wait}</span><button class="btn btn-small" disabled>Verrouillé</button>`
+                : `<span class="lock-icon">🔒 Paiement requis</span><a href="#payBox" class="btn btn-primary btn-small">Débloquer</a>`);
+        return `<div class="module-card ${state.ok ? 'unlocked' : 'locked'}">
+            <img src="${img}" alt="${title}" class="module-img" />
+            <div class="module-card__content"><span class="module-number">${num}</span>
+                <h3>${title}</h3><p class="subtext">${subtitle}</p>${badge || ''}${cta}</div></div>`;
     }
 
     renderModules() {
-        const grid = this.container.querySelector('#modulesGrid');
-        if (!grid) return;
-
-        const unlocked = this.getUnlockedModules();
-
+        const grid = document.getElementById('modulesGrid'); if (!grid) return;
+        const m = this.member, wk = m.paid ? m.currentWeek : 0;
         grid.innerHTML = MODULES.map(mod => {
-            const isUnlocked = mod.id <= this.member.currentWeek;
-            const coachingIdx = COACHING_WEEKS.indexOf(mod.id);
-            const isCoaching = coachingIdx !== -1;
-            const nextUnlock = !isUnlocked && mod.id === this.member.currentWeek + 1;
-            const daysRemaining = nextUnlock
-                ? DAYS_PER_MODULE - (this.member.daysElapsed % DAYS_PER_MODULE)
-                : 0;
-
-            return `
-                <div class="module-card ${isUnlocked ? 'unlocked' : 'locked'}">
-                    <img src="${mod.img}" alt="${mod.title}" class="module-img" />
-                    <div class="module-card__content">
-                        <span class="module-number">${mod.id}</span>
-                        ${isUnlocked
-                            ? `<h3>${mod.title}</h3>
-                               <p class="subtext">${mod.subtitle}</p>
-                               ${isCoaching ? `<span class="coaching-badge">Séance de coaching ${coachingIdx + 1} incluse</span>` : ''}
-                               <a href="${mod.href}" class="btn btn-primary btn-small">Commencer</a>`
-                            : `<h3>${mod.title}</h3>
-                               <p class="subtext">${mod.subtitle}</p>
-                               ${nextUnlock
-                                   ? `<span class="unlock-timer">Déblocage dans ${daysRemaining} jour${daysRemaining > 1 ? 's' : ''}</span>`
-                                   : `<span class="lock-icon">🔒 Verrouillé</span>`}
-                               <button class="btn btn-small" disabled>Verrouillé</button>`}
-                    </div>
-                </div>
-            `;
+            const ci = COACHING_WEEKS.indexOf(mod.id);
+            const badge = ci !== -1 ? `<span class="coaching-badge">Séance de coaching ${ci + 1} incluse</span>` : '';
+            const left = DAYS_PER_MODULE - (m.daysElapsed % DAYS_PER_MODULE);
+            const wait = mod.id === wk + 1 ? `Déblocage dans ${left} jour${left > 1 ? 's' : ''}` : 'Verrouillé';
+            return this.card(mod.img, mod.id, mod.title, mod.subtitle, badge, { ok: mod.id <= wk, href: mod.href, wait });
         }).join('');
-
-        const cg = document.getElementById('coachingGrid');
-        if (cg) {
-            cg.innerHTML = COACHING_INFO.map((c, i) => {
-                const wk = COACHING_WEEKS[i];
-                const ok = this.member.currentWeek >= wk;
-                return `<div class="module-card ${ok ? 'unlocked' : 'locked'}">
-                    <img src="${c.img}" alt="${c.title}" class="module-img" />
-                    <div class="module-card__content">
-                        <span class="module-number">${c.id}</span>
-                        <h3>Séance ${c.id} : ${c.title}</h3>
-                        <p class="subtext">${c.subtitle}</p>
-                        ${ok ? `<a href="${c.href}" class="btn btn-primary btn-small">Commencer</a>`
-                             : `<span class="lock-icon">🔒 Semaine ${wk}</span><button class="btn btn-small" disabled>Verrouillé</button>`}
-                    </div></div>`;
-            }).join('');
-        }
-
-        const emailEl = this.container.querySelector?.('#memberEmail') || document.getElementById('memberEmail');
-        if (emailEl && this.member.email) {
-            emailEl.textContent = this.member.email;
-        }
     }
 
-    bindLogout() {
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                localStorage.removeItem('eveilInterieur_member');
-                window.location.href = 'login.html';
+    renderCoaching() {
+        const grid = document.getElementById('coachingGrid'); if (!grid) return;
+        const wk = this.member.paid ? this.member.currentWeek : 0;
+        grid.innerHTML = COACHING_INFO.map((c, i) => this.card(c.img, c.id, `Séance ${c.id} : ${c.title}`, c.subtitle, '',
+            { ok: wk >= COACHING_WEEKS[i], href: c.href, wait: `Semaine ${COACHING_WEEKS[i]}` })).join('');
+    }
+
+    /* Bouton PayPal : le prix et la validation sont gérés par api/paypal.php (côté serveur) */
+    async initPayPal() {
+        const box = document.getElementById('paypal-button-container'), msg = document.getElementById('payMsg');
+        if (!box) return;
+        try {
+            const cfg = await Api.get('paypal.php?action=config');
+            const price = document.getElementById('payPrice'); if (price) price.textContent = `${cfg.amount} ${cfg.currency}`;
+            await new Promise((ok, ko) => {
+                const s = document.createElement('script');
+                s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.clientId)}&currency=${cfg.currency}&intent=capture`;
+                s.onload = ok; s.onerror = ko; document.head.appendChild(s);
             });
-        }
-    }
-
-    bindCoachingAccess() {
-        document.querySelectorAll('.coaching-link').forEach(link => {
-            const moduleId = parseInt(link.dataset.module);
-            const unlocked = moduleId <= this.member.currentWeek;
-            if (!unlocked) {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const daysRemaining = DAYS_PER_MODULE - (this.member.daysElapsed % DAYS_PER_MODULE);
-                    alert(`Ce module de coaching sera débloqué la semaine ${moduleId} (dans ${daysRemaining} jour${daysRemaining > 1 ? 's' : ''}).`);
-                });
-            }
-        });
-    }
-}
-
-/* ===== Plugin: Login Form ===== */
-class LoginForm {
-    constructor(form) {
-        this.form = form;
-        this.bindEvents();
-    }
-
-    bindEvents() {
-        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-    }
-
-    handleSubmit(e) {
-        e.preventDefault();
-        const emailInput = this.form.querySelector('#email');
-        const passwordInput = this.form.querySelector('#password');
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-
-        if (!email || password.length < 6) {
-            alert('Veuillez saisir une adresse email valide et un mot de passe de 6 caractères minimum.');
-            return;
-        }
-
-        const memberData = {
-            email: email,
-            startDate: new Date().toISOString(),
-            createdAt: Date.now()
-        };
-
-        localStorage.setItem('eveilInterieur_member', JSON.stringify(memberData));
-        window.location.href = 'member-area.html';
+            paypal.Buttons({
+                style: { layout: 'vertical', shape: 'pill', label: 'pay' },
+                createOrder: async () => (await Api.post('paypal.php?action=create')).id,
+                onApprove: async data => {
+                    msg.textContent = 'Validation du paiement…';
+                    try { await Api.post('paypal.php?action=capture', { orderID: data.orderID }); location.reload(); }
+                    catch (e) { msg.textContent = e.message + ' — si vous avez été débité, contactez-nous.'; }
+                },
+                onError: () => { msg.textContent = 'Le paiement a échoué. Réessayez ou contactez-nous.'; }
+            }).render('#paypal-button-container');
+        } catch (e) { msg.textContent = 'Le paiement PayPal est momentanément indisponible.'; }
     }
 }
 
@@ -401,8 +298,4 @@ document.addEventListener('DOMContentLoaded', () => {
         new MemberArea(document.querySelector('.member-modules').parentElement);
     }
 
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        new LoginForm(loginForm);
-    }
 });

@@ -1,0 +1,9 @@
+Options -Indexes
+# Contenu payant et fichiers de développement : jamais servis publiquement
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^(Module.*|Vos.*|database/.*|tools/.*|\.git.*|\.kilo.*|eveil-interieur-modules-et-coaching\.html)$ - [F,L]
+</IfModule>
+<FilesMatch "\.(sql|py|md|txt)$">
+  Require all denied
+</FilesMatch>

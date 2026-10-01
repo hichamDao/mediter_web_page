@@ -90,4 +90,79 @@ for i, (f, c, t, im, e, ps) in enumerate(A):
     page(f, t, e, hero(t, e, f'<a href="blog.html">Blog</a> · {c}') +
      '<div class="prose">' + "".join(f"<p>{p}</p>" for p in ps) +
      f'<div class="postnav"><a class="btn" href="blog.html">← Tous les articles</a><a class="btn" href="{nxt[0]}">Article suivant →</a></div></div>' + CTA, "blog.html")
+
+
+# ================= Pages connectées à l'API MySQL =================
+API = '<script src="js/api.js"></script>\n'
+# --- Blog dynamique (les cartes statiques restent en secours si l'API est indisponible) ---
+b = open(os.path.join(R, "blog.html"), encoding="utf-8").read()
+b = b.replace('<div class="posts">', '<div class="posts" id="posts">', 1).replace("</main>", API + """<script>
+(async()=>{try{const {posts}=await Api.get('blog.php');if(!posts.length)return;
+document.getElementById('posts').innerHTML=posts.map(p=>`<article class="post">${p.image?`<img src="${Api.esc(p.image)}" alt="" onerror="this.remove()" style="border-radius:8px;aspect-ratio:16/9;object-fit:cover;width:100%">`:''}<span class="tag">${Api.esc(p.category)}</span><h3>${Api.esc(p.title)}</h3><p>${Api.esc(p.excerpt)}</p><a class="link" href="article.html?slug=${encodeURIComponent(p.slug)}">Lire l’article →</a></article>`).join('');}catch(e){}})();
+</script></main>""", 1)
+open(os.path.join(R, "blog.html"), "w", encoding="utf-8").write(b)
+
+# --- Article (lu depuis MySQL) ---
+page("article.html", "Article", "Article du blog Éveil Intérieur.",
+ '<section class="page-hero"><p class="crumbs"><a href="index.html">Accueil</a> · <a href="blog.html">Blog</a> · <span id="a-cat"></span></p><h1 id="a-title">Chargement…</h1><p class="lead" id="a-excerpt"></p></section>'
+ '<div class="prose"><p class="meta" id="a-date"></p><div id="a-body"></div><div class="postnav"><a class="btn" href="blog.html">← Tous les articles</a></div></div>' + API + """<script>
+(async()=>{const $=i=>document.getElementById(i),slug=new URLSearchParams(location.search).get('slug');try{const p=await Api.get('blog.php?slug='+encodeURIComponent(slug));
+document.title=p.title+' — Éveil Intérieur';$('a-title').textContent=p.title;$('a-cat').textContent=p.category;$('a-excerpt').textContent=p.excerpt;
+$('a-date').textContent=new Date(p.created_at.replace(' ','T')+'Z').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});Api.renderText($('a-body'),p.content);
+}catch(e){$('a-title').textContent='Article introuvable';}})();
+</script>""" + CTA, "blog.html")
+
+# --- Contact ---
+page("contact.html", "Contact", "Écrivez-nous : nous répondons sous 48 h.",
+ hero("Contactez-nous", "Une question, une envie de réserver une séance ? Écrivez-nous, nous répondons sous 48 h.", "Contact") +
+ '<div class="prose" style="max-width:560px"><form id="cf" novalidate class="cform"><label>Votre nom<input name="name" required maxlength="120" autocomplete="name"></label>'
+ '<label>Votre email<input type="email" name="email" required maxlength="190" autocomplete="email"></label><label>Sujet<input name="subject" maxlength="200"></label>'
+ '<label>Message<textarea name="message" rows="6" required maxlength="5000"></textarea></label><input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">'
+ '<p id="cmsg" role="status"></p><button class="btn" type="submit">Envoyer le message →</button></form></div>'
+ '<style>.cform{display:grid;gap:1rem}.cform label{display:grid;gap:.3rem;font-size:.9rem;font-weight:500;color:var(--dark)}.cform input,.cform textarea{font:inherit;padding:.7rem 1rem;border:1px solid #d8dccf;border-radius:12px;background:#fff}.cform button{justify-self:start;border:0;cursor:pointer}.hp{position:absolute;left:-9999px}#cmsg{min-height:1.4rem;font-size:.9rem}</style>' + API + """<script>
+cf.addEventListener('submit',async e=>{e.preventDefault();cmsg.style.color='';const f=Object.fromEntries(new FormData(cf));
+if(!f.name||!f.email||!f.message){cmsg.textContent='Merci de remplir les champs obligatoires.';return}
+try{await Api.post('contact.php',f);cf.reset();cmsg.style.color='#3b5b45';cmsg.textContent='Merci ! Votre message a bien été envoyé.'}catch(er){cmsg.style.color='#b3261e';cmsg.textContent=er.message}});
+</script>""", "contact.html")
+
+# --- Carnet d'adresses (par membre) ---
+page("carnet.html", "Mon carnet d'adresses", "Votre carnet d'adresses personnel.",
+ hero("Mon carnet d'adresses", "Vos contacts, visibles uniquement par vous.", "Mon carnet") +
+ '<section class="block"><div class="wrap" style="max-width:900px"><form id="af" class="cform" novalidate style="background:#fff;padding:24px;border-radius:12px;box-shadow:0 6px 20px rgba(36,58,45,.08);margin-bottom:2rem">'
+ '<h2 id="ftitle" style="font-size:1.3rem;text-align:left;margin:0">Ajouter un contact</h2><input type="hidden" name="id">'
+ '<label>Nom *<input name="name" required maxlength="120"></label><label>Email<input type="email" name="email" maxlength="190"></label>'
+ '<label>Téléphone<input name="phone" maxlength="40"></label><label>Adresse<input name="address" maxlength="300"></label><label>Notes<textarea name="notes" rows="2" maxlength="3000"></textarea></label>'
+ '<p id="amsg" role="status"></p><div style="display:flex;gap:.6rem"><button class="btn" type="submit">Enregistrer →</button><button class="btn" type="button" id="acancel" hidden style="background:#8a938c">Annuler</button></div></form>'
+ '<div id="alist" class="posts" style="grid-template-columns:repeat(2,1fr)"></div></div></section>'
+ '<style>.cform{display:grid;gap:1rem}.cform label{display:grid;gap:.3rem;font-size:.9rem;font-weight:500;color:var(--dark)}.cform input,.cform textarea{font:inherit;padding:.7rem 1rem;border:1px solid #d8dccf;border-radius:12px}.cform button{border:0;cursor:pointer}#amsg{min-height:1.2rem;font-size:.9rem;color:#b3261e}@media(max-width:700px){#alist{grid-template-columns:1fr!important}}</style>' + API + """<script>
+let contacts=[];(async()=>{const me=await Api.me(true);if(!me.loggedIn){location.href='login.html';return}load()})();
+async function load(){contacts=(await Api.get('addressbook.php')).contacts;alist.innerHTML=contacts.length?contacts.map(c=>`<article class="post"><h3>${Api.esc(c.name)}</h3><p>${[c.email,c.phone,c.address].filter(Boolean).map(Api.esc).join('<br>')}${c.notes?'<br><em>'+Api.esc(c.notes)+'</em>':''}</p><div><a class="link" href="#" onclick="edit(${c.id});return false">Modifier</a> · <a class="link" href="#" onclick="rm(${c.id});return false">Supprimer</a></div></article>`).join(''):'<p>Aucun contact pour le moment.</p>'}
+function edit(id){const c=contacts.find(x=>x.id==id);for(const k of ['id','name','email','phone','address','notes'])af.elements[k].value=c[k]??'';ftitle.textContent='Modifier le contact';acancel.hidden=false;scrollTo({top:0,behavior:'smooth'})}
+function reset(){af.reset();af.elements.id.value='';ftitle.textContent='Ajouter un contact';acancel.hidden=true}acancel.onclick=reset;
+async function rm(id){if(confirm('Supprimer ce contact ?')){await Api.del('addressbook.php?id='+id);load()}}
+af.addEventListener('submit',async e=>{e.preventDefault();amsg.textContent='';const f=Object.fromEntries(new FormData(af));const id=f.id;delete f.id;
+try{id?await Api.put('addressbook.php?id='+id,f):await Api.post('addressbook.php',f);reset();load()}catch(er){amsg.textContent=er.message}});
+</script>""", "carnet.html")
+
+# --- Administration (articles + messages), réservée au rôle admin ---
+page("admin.html", "Administration", "Gestion du blog et des messages.",
+ hero("Administration", "Gérez les articles du blog et lisez les messages reçus.", "Administration") +
+ '<section class="block"><div class="wrap" style="max-width:900px"><h2>Articles</h2><form id="pf" class="cform" novalidate style="background:#fff;padding:24px;border-radius:12px;box-shadow:0 6px 20px rgba(36,58,45,.08);margin-bottom:1.5rem">'
+ '<input type="hidden" name="id"><label>Titre *<input name="title" required maxlength="200"></label><label>Catégorie<input name="category" maxlength="80"></label>'
+ '<label>Résumé<input name="excerpt" maxlength="400"></label><label>Image (URL, ex. images/blog-x.jpg)<input name="image" maxlength="255"></label>'
+ '<label>Contenu * <small>(ligne vide = nouveau paragraphe, **gras**)</small><textarea name="content" rows="10" required></textarea></label>'
+ '<label style="display:flex;gap:.5rem;align-items:center"><input type="checkbox" name="published" checked style="width:auto"> Publié</label><p id="pmsg" role="status" style="color:#b3261e"></p>'
+ '<div style="display:flex;gap:.6rem"><button class="btn" type="submit">Enregistrer →</button><button class="btn" type="button" id="pcancel" hidden style="background:#8a938c">Annuler</button></div></form><div id="plist"></div>'
+ '<h2 style="margin-top:3rem">Messages reçus</h2><div id="mlist"></div></div></section>'
+ '<style>.cform{display:grid;gap:1rem}.cform label{display:grid;gap:.3rem;font-size:.9rem;font-weight:500;color:var(--dark)}.cform input,.cform textarea{font:inherit;padding:.7rem 1rem;border:1px solid #d8dccf;border-radius:12px}.cform button{border:0;cursor:pointer}.row{display:flex;justify-content:space-between;gap:1rem;background:#fff;padding:14px 18px;border-radius:12px;margin-bottom:.6rem;align-items:center}.msg{background:#fff;padding:16px 18px;border-radius:12px;margin-bottom:.6rem}</style>' + API + """<script>
+let posts=[];(async()=>{const me=await Api.me(true);if(me.role!=='admin'){location.href='login.html';return}load()})();
+async function load(){posts=(await Api.get('blog.php?all=1')).posts;plist.innerHTML=posts.map(p=>`<div class="row"><span>${p.published?'':'🔒 brouillon · '}<b>${Api.esc(p.title)}</b> <small>${Api.esc(p.category)}</small></span><span><a class="link" href="#" onclick="edit(${p.id});return false">Modifier</a> · <a class="link" href="#" onclick="rm(${p.id});return false">Supprimer</a></span></div>`).join('')||'<p>Aucun article.</p>';
+const ms=(await Api.get('contact.php')).messages;mlist.innerHTML=ms.map(m=>`<div class="msg"><b>${Api.esc(m.name)}</b> &lt;${Api.esc(m.email)}&gt; <small>${Api.esc(m.created_at)} UTC</small>${m.subject?'<br><i>'+Api.esc(m.subject)+'</i>':''}<p style="margin-top:.4rem;white-space:pre-wrap">${Api.esc(m.message)}</p><a class="link" href="#" onclick="delMsg(${m.id});return false">Supprimer</a></div>`).join('')||'<p>Aucun message.</p>'}
+async function edit(id){const p=await Api.get('blog.php?all=1&slug='+encodeURIComponent(posts.find(x=>x.id==id).slug));for(const k of ['id','title','category','excerpt','image','content'])pf.elements[k].value=p[k]??'';pf.elements.published.checked=!!+p.published;pcancel.hidden=false;pf.scrollIntoView({behavior:'smooth'})}
+function reset(){pf.reset();pf.elements.id.value='';pcancel.hidden=true}pcancel.onclick=reset;
+async function rm(id){if(confirm('Supprimer cet article ?')){await Api.del('blog.php?id='+id);load()}}
+async function delMsg(id){if(confirm('Supprimer ce message ?')){await Api.del('contact.php?id='+id);load()}}
+pf.addEventListener('submit',async e=>{e.preventDefault();pmsg.textContent='';const f=Object.fromEntries(new FormData(pf));f.published=pf.elements.published.checked;const id=f.id;delete f.id;
+try{id?await Api.put('blog.php?id='+id,f):await Api.post('blog.php',f);reset();load()}catch(er){pmsg.textContent=er.message}});
+</script>""", "")
 print("pages générées")
