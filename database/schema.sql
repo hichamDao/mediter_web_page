@@ -38,6 +38,18 @@ CREATE TABLE IF NOT EXISTS address_book (
   INDEX (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Carnet de notes de coaching (réservé aux membres ayant payé), une note par séance
+CREATE TABLE IF NOT EXISTS coaching_notes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  session TINYINT UNSIGNED NOT NULL,          -- séance de coaching 1, 2 ou 3
+  content MEDIUMTEXT NOT NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  UNIQUE KEY uq_user_session (user_id, session),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS blog_posts (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   slug VARCHAR(120) NOT NULL UNIQUE,

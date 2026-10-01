@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mon carnet de coaching — Éveil Intérieur</title>
+<meta name="description" content="Vos notes de coaching, visibles uniquement par vous.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="home.css"></head>
+<body>
+<header class="nav"><div class="wrap">
+<a class="brand" href="index.html"><svg class="i" viewBox="0 0 24 24"><path d="M12 4c2 2.5 2.5 6 0 9-2.5-3-2-6.5 0-9zM3 9c3.5 0 6.5 2 8 5-3.5.5-7-1-8-5zM21 9c-3.5 0-6.5 2-8 5 3.5.5 7-1 8-5zM5 18c4 2 10 2 14 0"/></svg><span>Éveil Intérieur<small>Respirez · Équilibrez · Avancez</small></span></a>
+<nav class="menu"><a href="index.html">Accueil</a><a href="histoire.html">À propos</a><a href="index.html#services">Services</a><a href="blog.html">Blog</a><a href="index.html#temoignages">Témoignages</a><a href="contact.html">Contact</a></nav>
+<div class="nav-actions"><button class="icon-btn" aria-label="Rechercher"><img src="icons/search.svg" alt=""></button><button class="icon-btn menu-toggle" aria-label="Ouvrir le menu" aria-expanded="false"><img src="icons/menu.svg" alt=""></button><a class="btn" href="parcours.html#reserver">Réserver une séance</a></div></div></header>
+<main>
+<section class="page-hero"><p class="crumbs"><a href="index.html">Accueil</a> · <a href="member-area.html">Mon espace</a> · Carnet de coaching</p><h1>Mon carnet de coaching</h1><p class="lead">Un espace privé pour noter vos réponses, vos prises de conscience et votre plan d’action après chaque séance.</p></section>
+<section class="block"><div class="wrap" style="max-width:820px">
+<div class="tiles" id="ctabs" style="grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem"></div>
+<div id="ceditor"></div>
+<p id="clink" style="text-align:center;margin:1rem 0"></p>
+<p style="text-align:center;margin-top:1.5rem"><button class="btn" id="cprint" type="button">Imprimer / enregistrer en PDF</button></p>
+</div></section>
+<script src="js/api.js"></script>
+<script src="js/coaching-notes.js"></script>
+<div id="printAll" hidden></div>
+<style>
+.ctab{font:inherit;cursor:pointer;background:#fff;border:2px solid transparent;border-radius:12px;padding:14px 10px;box-shadow:0 4px 14px rgba(36,58,45,.08);text-align:center;color:var(--dark)}
+.ctab b{display:block;font-family:var(--serif);font-size:1.05rem;font-weight:500}.ctab small{color:#6f7a72}
+.ctab.on{border-color:var(--green)}.ctab:disabled{opacity:.55;cursor:not-allowed}
+@media print{body>*:not(#printAll){display:none!important}#printAll{display:block!important;padding:0 1cm}#printAll h1{font-size:20pt}#printAll h2{font-size:14pt;margin:18pt 0 6pt}#printAll p{white-space:pre-wrap;line-height:1.5}}
+</style>
+<script>
+(async()=>{
+  const me=await Api.me(true);
+  if(!me.loggedIn){location.href='login.html';return}
+  if(!me.paid){location.href='member-area.html';return}
+  const WEEKS=[2,4,6],TITLES=['Lever les blocages des premiers jours','Traverser les émotions qui remontent','Ajuster votre rituel pour qu’il dure'];
+  const {notes}=await Api.get('coaching_notes.php');
+  const tabs=document.getElementById('ctabs'),box=document.getElementById('ceditor'),link=document.getElementById('clink');
+  let cur=Math.min(Math.max(parseInt(location.hash.slice(1))||1,1),3);
+  if(me.currentWeek<WEEKS[cur-1]) cur=1;
+  let ed=null;
+  function drawTabs(){
+    tabs.textContent='';
+    [1,2,3].forEach(n=>{
+      const ok=me.currentWeek>=WEEKS[n-1],b=document.createElement('button');
+      b.type='button';b.className='ctab'+(n===cur?' on':'');b.disabled=!ok;
+      const t=document.createElement('b');t.textContent='Séance '+n;
+      const sm=document.createElement('small');sm.textContent=ok?(notes[n]&&notes[n].content?'Notes enregistrées':'Pas encore de notes'):'🔒 Semaine '+WEEKS[n-1];
+      b.append(t,sm);b.onclick=async()=>{if(ed)await ed.flush();cur=n;history.replaceState(null,'','#'+n);show()};tabs.appendChild(b);
+    });
+  }
+  async function show(){
+    drawTabs();
+    ed=await CoachingNotes.mount(box,cur,notes[cur]);
+    box.querySelector('textarea')?.addEventListener('input',e=>{notes[cur]={content:e.target.value,updatedAt:new Date().toISOString().slice(0,19).replace('T',' ')}});
+    link.textContent='';const a=document.createElement('a');a.className='link';a.href='lesson.html?c='+cur;a.textContent='Relire la séance '+cur+' : '+TITLES[cur-1]+' →';link.appendChild(a);
+  }
+  document.getElementById('cprint').onclick=async()=>{
+    if(ed)await ed.flush();
+    const p=document.getElementById('printAll');p.textContent='';
+    const h=document.createElement('h1');h.textContent='Mon carnet de coaching — '+me.name;p.appendChild(h);
+    [1,2,3].forEach(n=>{const c=notes[n]&&notes[n].content;if(!c)return;const h2=document.createElement('h2');h2.textContent='Séance '+n+' : '+TITLES[n-1];const t=document.createElement('p');t.textContent=c;p.append(h2,t)});
+    if(!p.querySelector('h2')){alert('Aucune note à imprimer pour le moment.');return}
+    p.hidden=false;window.print();p.hidden=true;
+  };
+  show();
+})();
+</script>
+</main>
+<footer><div class="wrap"><div class="top">
+<div><a class="brand" href="index.html"><svg class="i" viewBox="0 0 24 24"><path d="M12 4c2 2.5 2.5 6 0 9-2.5-3-2-6.5 0-9zM3 9c3.5 0 6.5 2 8 5-3.5.5-7-1-8-5zM21 9c-3.5 0-6.5 2-8 5 3.5.5 7-1 8-5zM5 18c4 2 10 2 14 0"/></svg><span>Éveil Intérieur<small>Respirez · Équilibrez · Avancez</small></span></a><p style="margin-top:1rem">Un espace bienveillant pour vous accompagner vers plus de sérénité et d’harmonie.</p></div>
+<div><h4>Liens utiles</h4><ul><li><a href="index.html">Accueil</a></li><li><a href="histoire.html">À propos</a></li><li><a href="index.html#services">Services</a></li><li><a href="index.html#temoignages">Témoignages</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+<div><h4>Nos services</h4><ul><li><a href="meditation-respiration.html">Méditation &amp; Respiration</a></li><li><a href="developpement-personnel.html">Développement Personnel</a></li><li><a href="coaching-individuel.html">Coaching Individuel</a></li><li><a href="retraites-ateliers.html">Retraites &amp; Ateliers</a></li></ul></div>
+<div><h4>Contact</h4><ul><li>contact@eveil-interieur.fr</li><li>+33 6 12 34 56 78</li><li>Paris, France</li></ul></div>
+<div><h4>Suivez-nous</h4><div class="socials"><a href="#" aria-label="Instagram"><img src="icons/instagram.svg" alt=""></a><a href="#" aria-label="Facebook"><img src="icons/facebook.svg" alt=""></a><a href="#" aria-label="LinkedIn"><img src="icons/linkedin.svg" alt=""></a></div><h4 class="newsletter-title">Newsletter</h4><p>Recevez nos conseils et inspirations</p><form onsubmit="return false"><input type="email" placeholder="Votre email" aria-label="Email"><button aria-label="Envoyer"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form></div></div>
+<div class="bottom"><span>© 2026 Éveil Intérieur. Tous droits réservés.</span><span>Mentions légales · Politique de confidentialité · CGV</span></div></div></footer>
+</body></html>

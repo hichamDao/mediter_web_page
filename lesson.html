@@ -16,6 +16,7 @@
         .hero-section { background: linear-gradient(135deg, rgba(27, 176, 206, 0.03), rgba(27, 176, 206, 0.03)); }
     </style>
     <script defer src="js/api.js"></script>
+    <script defer src="js/coaching-notes.js"></script>
     <script defer src="script.js"></script>
 </head>
 <body>
@@ -24,7 +25,8 @@
             <a href="index.html" class="logo">Éveil Intérieur</a>
             <div class="nav-links">
                 <a href="member-area.html">Mon espace</a>
-                <a href="carnet.html">Mon carnet</a>
+                <a href="carnet-coaching.html">Carnet de coaching</a>
+                <a href="carnet.html">Carnet d'adresses</a>
                 <a href="#" id="logoutBtn">Déconnexion</a>
             </div>
         </nav>
@@ -43,6 +45,7 @@
     <section class="container section" style="padding-top:0">
         <div class="lesson-tabs" id="lessonTabs"></div>
         <article class="lesson-article" id="lessonArticle"></article>
+        <div id="coachNotes" hidden></div>
         <div class="lesson-pager" id="lessonPager"></div>
     </section>
 
@@ -106,6 +109,7 @@
             $('moduleTitle').textContent = info.title;
             $('moduleSubtitle').textContent = info.subtitle;
             $('lessonArticle').innerHTML = `<h2>${s.title}</h2>${s.html}`;
+            $('coachNotes').hidden = false; CoachingNotes.mount($('coachNotes'), coachN);
             const next = COACHING_INFO[coachN];
             $('lessonPager').innerHTML = `<a class="btn btn-outline" href="member-area.html">← Mon espace</a>` +
                 (next && week >= COACHING_WEEKS[coachN] ? `<a class="btn btn-primary" href="${next.href}">Séance suivante →</a>` : '');

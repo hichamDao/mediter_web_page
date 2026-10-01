@@ -103,4 +103,27 @@ p2.call("contact.php", "POST", {"name": "Bot", "email": "b@x.fr", "message": "sp
 codes = [p2.call("contact.php", "POST", {"name": "Jo", "email": "jo@x.fr", "message": "m"})[0] for _ in range(6)]; t("limite anti-spam (429)", 429 in codes, codes)
 t("membre non-admin ne lit pas les messages", z.call("contact.php")[0] == 403)
 t("admin lit les messages", len(a.call("contact.php")[1]["messages"]) >= 1)
+
+print("Carnet de coaching (membres payants)")
+N = "coaching_notes.php"
+t("sans connexion = 401", C().call(N)[0] == 401)
+t("membre non payé = 402 (lecture)", mal.call(N)[0] == 402)
+t("membre non payé = 402 (écriture)", mal.call(N + "?session=1", "PUT", {"content": "x"})[0] == 402)
+sql("update users set role='member', paid_at = UTC_TIMESTAMP() - interval 9 day where email='alice@x.fr'")   # simple membre, semaine 2 : séance 1 débloquée
+c, j = a.call(N + "?session=1", "PUT", {"content": "Mon blocage : le manque de temps.\nPlan : 5 min le matin."}); t("enregistrement séance 1", c == 200 and j["ok"] and j["updatedAt"], (c, j))
+c, j = a.call(N); t("lecture : contenu + retours à la ligne conservés", c == 200 and "\n" in j["notes"]["1"]["content"] and j["unlocked"] == [1], j)
+a.call(N + "?session=1", "PUT", {"content": "Version 2"}); t("mise à jour (une seule ligne par séance)", sql("select count(*) from coaching_notes where session=1 and user_id=(select id from users where email='alice@x.fr')") == "1" and a.call(N)[1]["notes"]["1"]["content"] == "Version 2")
+t("séance verrouillée (semaine 4) = 403", a.call(N + "?session=2", "PUT", {"content": "x"})[0] == 403)
+t("séance invalide = 400", a.call(N + "?session=9", "PUT", {"content": "x"})[0] == 400)
+t("note trop longue = 413", a.call(N + "?session=1", "PUT", {"content": "a" * 20001})[0] == 413)
+t("XSS stocké tel quel, jamais interprété (texte brut)", a.call(N + "?session=1", "PUT", {"content": "<script>alert(1)</script>"})[0] == 200 and "<script>" in a.call(N)[1]["notes"]["1"]["content"])
+t("PUT sans jeton CSRF refusé", (lambda x: x.call(N + "?session=1", "PUT", {"content": "x"})[0])(C()) in (401, 403))
+nora = C(); nora.call("auth.php"); nora.call("auth.php?action=register", "POST", {"name": "Nora", "email": "nora@x.fr", "password": "motdepasse4"})
+sql("update users set paid_at = UTC_TIMESTAMP() - interval 9 day where email='nora@x.fr'")
+t("un autre membre payant ne voit pas mes notes", nora.call(N)[1]["notes"] == {})
+nora.call(N + "?session=1", "PUT", {"content": "Notes de Nora"}); t("chaque membre a ses propres notes", a.call(N)[1]["notes"]["1"]["content"].startswith("<script>") and nora.call(N)[1]["notes"]["1"]["content"] == "Notes de Nora")
+t("effacement par contenu vide", a.call(N + "?session=1", "PUT", {"content": "   "})[0] == 200 and a.call(N)[1]["notes"] == {})
+a.call(N + "?session=1", "PUT", {"content": "à supprimer"}); t("suppression (DELETE)", a.call(N + "?session=1", "DELETE")[0] == 200 and a.call(N)[1]["notes"] == {})
+sql("update users set paid_at = NULL where email='nora@x.fr'"); t("accès retiré => 402", nora.call(N)[0] == 402)
+
 print(f"\n{ok} OK, {fail} échec(s)"); sys.exit(1 if fail else 0)

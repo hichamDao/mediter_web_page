@@ -56,3 +56,6 @@ des dossiers « Module … » / « Vos 3 séances de coaching ».
 ## Tests automatisés (facultatif)
 `tools/dev/e2e.py` teste toute l'API (inscription, sécurité, paiement, déblocage, carnet, blog, contact) avec un faux serveur PayPal
 (`tools/dev/fake_paypal.php`, **ne jamais déployer**). Voir l'en-tête du script.
+
+## Mise à jour d'une base existante
+- **Carnet de coaching** : importez `database/add_coaching_notes.sql` (la table est aussi créée automatiquement au premier usage si l'utilisateur MySQL a le droit CREATE).
