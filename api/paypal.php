@@ -9,6 +9,7 @@ $base = $pp['base_url'] ?? (($pp['mode'] ?? 'sandbox') === 'live' ? 'https://api
 
 if ($action === 'config') out(['clientId' => $pp['client_id'], 'amount' => $pp['amount'], 'currency' => $pp['currency']]);
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail('Méthode non autorisée.', 405);
+if (!function_exists('curl_init')) fail('L’extension PHP curl n’est pas activée.', 503, ['detail' => 'Dans php.ini, activez extension=curl puis redémarrez Apache/PHP.']);
 if ($pp['client_id'] === '' || $pp['client_secret'] === '') fail('PayPal n’est pas configuré.', 503);
 $u = require_user(); $in = body();
 
@@ -18,8 +19,10 @@ function pp_call(string $method, string $path, array|object|null $json = null, ?
     if ($token === null) { curl_setopt($ch, CURLOPT_USERPWD, $pp['client_id'] . ':' . $pp['client_secret']); curl_setopt($ch, CURLOPT_POSTFIELDS, 'grant_type=client_credentials'); }
     else { $h[] = 'Authorization: Bearer ' . $token; $h[] = 'Content-Type: application/json'; if ($json !== null) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($json)); }
     curl_setopt_array($ch, [CURLOPT_CUSTOMREQUEST => $method, CURLOPT_HTTPHEADER => $h, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 25]);
-    $raw = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE); curl_close($ch);
-    if ($raw === false) fail('PayPal injoignable, réessayez.', 502);
+    if (!empty($pp['ca_bundle'])) curl_setopt($ch, CURLOPT_CAINFO, $pp['ca_bundle']);          // dev local Windows : chemin de cacert.pem
+    if (($pp['verify_ssl'] ?? true) === false) { curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0); }  // LOCAL UNIQUEMENT
+    $raw = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE); $err = curl_error($ch); curl_close($ch);
+    if ($raw === false) { error_log("[paypal] curl : $err"); fail('PayPal injoignable depuis le serveur.', 502, ['detail' => $err]); }
     return [$code, json_decode($raw, true) ?: []];
 }
 function pp_detail(array $j): string {

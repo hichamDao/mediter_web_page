@@ -42,6 +42,17 @@ des dossiers « Module … » / « Vos 3 séances de coaching ».
 * Servez le site en **HTTPS** (cookie de session `Secure` activé automatiquement).
 * Les pages `index/blog/…` sont générées par `tools/build_pages.py` ; les leçons et le blog viennent de MySQL.
 
-## Tests locaux (facultatif)
+## Travailler en local (sans hébergement)
+1. Installez **XAMPP** (ou Laragon / MAMP) : PHP ≥ 8.1 + MySQL. Démarrez MySQL, créez la base `eveil` (phpMyAdmin → Importer `database/schema.sql` puis `seed.sql`).
+2. `cp api/config.sample.php api/config.php` : renseignez la base (`localhost`, `root`, mot de passe vide avec XAMPP) et vos clés PayPal **Sandbox**.
+3. Lancez le site avec PHP (dans le dossier du projet) : `php -S localhost:8000` puis ouvrez http://localhost:8000
+   (ne l'ouvrez pas en double-cliquant sur les fichiers ni avec Live Server : sans PHP, l'API ne répond pas).
+4. **Diagnostic PayPal** : `php tools/dev/check_paypal.php` indique précisément ce qui bloque (curl, clés, certificat SSL, authentification).
+5. Test de paiement : connectez-vous à PayPal avec un compte **Sandbox Personal** (developer.paypal.com → Sandbox → Accounts), pas votre vrai compte.
+
+**Erreur fréquente sous Windows / XAMPP : « SSL certificate problem »** → téléchargez https://curl.se/ca/cacert.pem, enregistrez-le
+(ex. `C:/xampp/php/extras/ssl/cacert.pem`) puis ajoutez dans `api/config.php`, section `paypal` : `'ca_bundle' => 'C:/xampp/php/extras/ssl/cacert.pem',`.
+
+## Tests automatisés (facultatif)
 `tools/dev/e2e.py` teste toute l'API (inscription, sécurité, paiement, déblocage, carnet, blog, contact) avec un faux serveur PayPal
 (`tools/dev/fake_paypal.php`, **ne jamais déployer**). Voir l'en-tête du script.

@@ -9,6 +9,8 @@ return [
     // 'base_url' => 'https://api-m.paypal.com',   // facultatif : déduit de 'mode'
     'amount' => '297.00',                      // prix fixé côté serveur (jamais lu depuis le navigateur)
     'currency' => 'USD',
+    // Dev local Windows (erreur « SSL certificate problem ») : 'ca_bundle' => 'C:/xampp/php/extras/ssl/cacert.pem',
+    // (dernier recours, LOCAL UNIQUEMENT, jamais en production) : 'verify_ssl' => false,
   ],
   'contact_to' => 'contact@eveil-interieur.fr', // destinataire des messages du formulaire ('' = base de données seulement)
   'allowed_origin' => '',                       // seulement si le site et l'API sont sur des domaines différents
