@@ -1,3 +1,5 @@
-api/config.php
-__pycache__/
 *.pyc
+__pycache__/
+api/config.php
+info.php
+test.php

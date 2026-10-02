@@ -165,4 +165,12 @@ async function delMsg(id){if(confirm('Supprimer ce message ?')){await Api.del('c
 pf.addEventListener('submit',async e=>{e.preventDefault();pmsg.textContent='';const f=Object.fromEntries(new FormData(pf));f.published=pf.elements.published.checked;const id=f.id;delete f.id;
 try{id?await Api.put('blog.php?id='+id,f):await Api.post('blog.php',f);reset();load()}catch(er){pmsg.textContent=er.message}});
 </script>""", "")
+
+# ---------- Pages légales : le texte vient de content/*.html (à modifier là), habillé avec l'en-tête/pied de page du site ----------
+LEGAL = {"conditions-d-utilisation.html": ("Conditions d’utilisation", "Conditions d’utilisation du site et de la formation Éveil Intérieur."),
+         "politique-de-confidentialite.html": ("Politique de confidentialité", "Comment Éveil Intérieur collecte, utilise et protège vos données.")}
+for fn, (title, desc) in LEGAL.items():
+    raw = open(os.path.join(R, "content", fn), encoding="utf-8").read()
+    body = re.sub(r"</?section[^>]*>", "", re.sub(r"<h1>.*?</h1>", "", raw, count=1, flags=re.S)).strip()
+    page(fn, title, desc, hero(title, "", title) + '<div class="prose">' + body + "</div>" + CTA)
 print("pages générées")

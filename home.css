@@ -95,3 +95,7 @@ footer .bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:1re
 .post .tag{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}.post h3{font-size:1.15rem}.post p{font-size:.9rem;flex:1}
 .postnav{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:2.5rem}
 @media(max-width:900px){.steps,.tiles,.posts{grid-template-columns:1fr}.split{grid-template-columns:1fr}}
+
+/* icône lotus (viewBox 64) */
+svg.i.lotus{stroke-width:2.2}.brand svg.lotus{width:40px;height:40px;stroke-width:1.9}
+footer a:hover{color:#fff;text-decoration:underline}
