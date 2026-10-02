@@ -59,3 +59,10 @@ des dossiers « Module … » / « Vos 3 séances de coaching ».
 
 ## Mise à jour d'une base existante
 - **Carnet de coaching** : importez `database/add_coaching_notes.sql` (la table est aussi créée automatiquement au premier usage si l'utilisateur MySQL a le droit CREATE).
+- **Newsletter** : importez `database/add_newsletter.sql` (créée aussi automatiquement au premier usage si le droit CREATE existe).
+
+## Emails (bienvenue après paiement, newsletter)
+- Dans `api/config.php` ajoutez : `'site_url' => 'https://www.votre-site.com'` (liens des emails) et `'mail' => ['mode' => 'mail', 'from' => 'no-reply@votre-domaine.com']`.
+- **Production** : `mode` = `mail` utilise la messagerie de l'hébergeur. Utilisez une adresse `from` de VOTRE domaine, sinon les emails arrivent en spam. Pour un meilleur taux de livraison, configurez SPF/DKIM chez votre hébergeur.
+- **Local (Devserver)** : PHP n'a pas de serveur de messagerie. Mettez `'mode' => 'log'` : les emails sont écrits dans `api/private/outbox.log` au lieu d'être envoyés.
+- Liste des abonnés et export CSV : `admin.html` (compte administrateur).

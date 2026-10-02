@@ -15,7 +15,7 @@ def page(fn, title, desc, main, active=""):
     h = re.sub(r'(<meta name="description" content=").*?(">)', lambda m: m.group(1) + desc + m.group(2), h)
     nav = NAV
     if active: nav = nav.replace(f'href="{active}"', f'class="on" href="{active}"', 1)
-    open(os.path.join(R, fn), "w", encoding="utf-8").write(f"{h}<body>\n{nav}\n<main>\n{main}\n</main>\n{FOOT}\n</body></html>")
+    open(os.path.join(R, fn), "w", encoding="utf-8").write(f"{h}<body>\n{nav}\n<main>\n{main}\n</main>\n{FOOT}\n<script src=\"js/newsletter.js\" defer></script>\n</body></html>")
 BTN = lambda t, h="parcours.html": f'<a class="btn" href="{h}">{t} →</a>'
 def hero(t, lead, crumb, btn=""):
     return f'<section class="page-hero"><p class="crumbs"><a href="index.html">Accueil</a> · {crumb}</p><h1>{t}</h1><p class="lead">{lead}</p>{btn}</section>'
@@ -173,4 +173,12 @@ for fn, (title, desc) in LEGAL.items():
     raw = open(os.path.join(R, "content", fn), encoding="utf-8").read()
     body = re.sub(r"</?section[^>]*>", "", re.sub(r"<h1>.*?</h1>", "", raw, count=1, flags=re.S)).strip()
     page(fn, title, desc, hero(title, "", title) + '<div class="prose">' + body + "</div>" + CTA)
+
+# ---------- Désinscription newsletter (le lien de l'email contient ?token=…) ----------
+page("newsletter-desinscription.html", "Désinscription newsletter", "Se désinscrire de la newsletter Éveil Intérieur.",
+ hero("Se désinscrire de la newsletter", "Confirmez pour ne plus recevoir nos emails.", "Newsletter") +
+ '<div class="prose" style="text-align:center"><p id="nlu-msg">Cliquez sur le bouton pour confirmer votre désinscription.</p><p><button class="btn" id="nlu-btn" type="button">Confirmer la désinscription</button></p></div>'
+ '<script>const tk=new URLSearchParams(location.search).get("token")||"";const b=document.getElementById("nlu-btn"),m=document.getElementById("nlu-msg");'
+ 'if(!tk){m.textContent="Lien invalide : ouvrez le lien reçu dans votre email.";b.hidden=true}'
+ 'b.onclick=async()=>{b.disabled=true;try{await Newsletter.post("newsletter.php?action=unsubscribe",{token:tk});m.textContent="Vous êtes bien désinscrit(e). Vous ne recevrez plus nos emails.";b.hidden=true}catch(e){m.textContent=e.message;b.disabled=false}};</script>')
 print("pages générées")

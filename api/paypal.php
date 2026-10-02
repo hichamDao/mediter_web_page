@@ -64,6 +64,8 @@ if ($action === 'capture') {
     db()->prepare("UPDATE payments SET status = 'COMPLETED', paypal_capture_id = ?, payer_email = ?, paid_at = ? WHERE id = ?")
         ->execute([$cap['id'] ?? null, $j['payer']['email_address'] ?? null, now(), $row['id']]);
     db()->prepare('UPDATE users SET paid_at = ? WHERE id = ? AND paid_at IS NULL')->execute([now(), $u['id']]);
+    require_once __DIR__ . '/mail.php';
+    try { welcome_mail($u, (string)$pp['amount'], (string)$pp['currency']); } catch (Throwable $e) { error_log('[mail] ' . $e->getMessage()); }   // l'accès est déjà ouvert : un échec d'email ne bloque rien
     out(['paid' => true] + member_state(current_user()));
 }
 fail('Action inconnue.', 404);

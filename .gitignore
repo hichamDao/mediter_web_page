@@ -3,3 +3,4 @@ __pycache__/
 api/config.php
 info.php
 test.php
+api/private/outbox.log

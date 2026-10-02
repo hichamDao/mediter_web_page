@@ -12,6 +12,11 @@ return [
     // Dev local Windows (erreur « SSL certificate problem ») : 'ca_bundle' => 'C:/xampp/php/extras/ssl/cacert.pem',
     // (dernier recours, LOCAL UNIQUEMENT, jamais en production) : 'verify_ssl' => false,
   ],
+  'site_url' => '',                              // ex. 'https://www.votre-site.com' : utilisé dans les liens des emails (recommandé en production)
+  'mail' => [
+    'mode' => 'mail',                           // 'mail' = fonction mail() de PHP ; 'log' = écrit dans api/private/outbox.log (développement local)
+    'from' => 'no-reply@votre-domaine.com',     // adresse d'expéditeur : utilisez une adresse de VOTRE domaine (sinon les emails finissent en spam)
+  ],
   'contact_to' => 'contact@eveil-interieur.fr', // destinataire des messages du formulaire ('' = base de données seulement)
   'allowed_origin' => '',                       // seulement si le site et l'API sont sur des domaines différents
 ];

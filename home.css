@@ -99,3 +99,7 @@ footer .bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:1re
 /* icône lotus (viewBox 64) */
 svg.i.lotus{stroke-width:2.2}.brand svg.lotus{width:40px;height:40px;stroke-width:1.9}
 footer a:hover{color:#fff;text-decoration:underline}
+/* newsletter */
+.hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0}
+.nl-msg{font-size:.78rem;margin:.5rem 0 0;color:#cfe3d4;min-height:1em}.nl-msg.err{color:#ffb4a8}
+.nl-note{font-size:.7rem;opacity:.7;margin:.3rem 0 0}

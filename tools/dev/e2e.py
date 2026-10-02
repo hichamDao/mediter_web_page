@@ -126,4 +126,38 @@ t("effacement par contenu vide", a.call(N + "?session=1", "PUT", {"content": "  
 a.call(N + "?session=1", "PUT", {"content": "à supprimer"}); t("suppression (DELETE)", a.call(N + "?session=1", "DELETE")[0] == 200 and a.call(N)[1]["notes"] == {})
 sql("update users set paid_at = NULL where email='nora@x.fr'"); t("accès retiré => 402", nora.call(N)[0] == 402)
 
+
+print("Newsletter et emails")
+OUT = "/home/claude/mediter_web_page/api/private/outbox.log"
+def outbox(): 
+    try: return open(OUT, encoding="utf-8").read()
+    except FileNotFoundError: return ""
+NL = "newsletter.php"; v = C(); v.call("auth.php")
+t("email invalide refusé", v.call(NL, "POST", {"email": "pas-un-email"})[0] == 400)
+c, j = v.call(NL, "POST", {"email": "Lecteur@X.fr"}); t("inscription OK (email normalisé en minuscules)", c == 201 and j["ok"] and sql("select count(*) from newsletter_subscribers where email='lecteur@x.fr'") == "1", (c, j))
+t("email de bienvenue avec lien de désinscription", "lecteur@x.fr" in outbox() and "newsletter-desinscription.html?token=" in outbox())
+n1 = outbox().count("Bienvenue dans la newsletter"); c2, j2 = v.call(NL, "POST", {"email": "lecteur@x.fr"})
+t("doublon : même réponse, pas de 2e ligne, pas de 2e email", c2 == 201 and j2 == j and sql("select count(*) from newsletter_subscribers") == "1" and outbox().count("Bienvenue dans la newsletter") == n1)
+t("champ piège (bot) : ignoré", v.call(NL, "POST", {"email": "bot@x.fr", "website": "http://spam"})[1] == {"ok": True} and sql("select count(*) from newsletter_subscribers where email='bot@x.fr'") == "0")
+t("sans jeton CSRF refusé", C().call(NL, "POST", {"email": "z@x.fr"})[0] == 403)
+t("liste réservée à l'admin (anonyme = 401)", C().call(NL)[0] == 401); t("liste refusée à un simple membre (403)", a.call(NL)[0] == 403)
+tok = sql("select token from newsletter_subscribers where email='lecteur@x.fr'")
+t("désinscription : jeton invalide = 404", v.call(NL + "?action=unsubscribe", "POST", {"token": "x" * 32})[0] == 404)
+t("désinscription OK", v.call(NL + "?action=unsubscribe", "POST", {"token": tok})[0] == 200 and sql("select unsubscribed_at is not null from newsletter_subscribers where email='lecteur@x.fr'") == "1")
+v.call(NL, "POST", {"email": "lecteur@x.fr"}); t("réinscription après désinscription", sql("select unsubscribed_at is null from newsletter_subscribers where email='lecteur@x.fr'") == "1")
+w = C(); w.call("auth.php"); codes = [w.call(NL, "POST", {"email": f"spam{i}@x.fr"})[0] for i in range(8)]; t("limite anti-spam (429)", 429 in codes, codes)
+sql("update users set role='admin' where email='nora@x.fr'"); nora.call("auth.php?action=login", "POST", {"email": "nora@x.fr", "password": "motdepasse4"})
+c, j = nora.call(NL); t("l'admin voit la liste", c == 200 and j["active"] >= 1 and any(s["email"] == "lecteur@x.fr" for s in j["subscribers"]), j if c != 200 else "")
+sql("update users set role='member' where email='nora@x.fr'")
+# email de bienvenue après paiement : un seul email par paiement, adressé au bon membre
+open(OUT, "w").close(); p = C(); p.call("auth.php"); p.call("auth.php?action=register", "POST", {"name": "Pauline <b>", "email": "pauline@x.fr", "password": "motdepasse5"})
+t("inscription seule = aucun email d'accès", "pauline@x.fr" not in outbox())
+mode("ok"); c, j = p.call("paypal.php?action=create", "POST", {}); poid = j["id"]; p.call("paypal.php?action=capture", "POST", {"orderID": poid})
+o = outbox(); t("paiement validé => email de bienvenue à Pauline", "pauline@x.fr" in o and "Bienvenue dans Éveil Intérieur" in o and "297.00 USD" in o and "/login.html" in o)
+t("l'email ne contient aucun mot de passe", "motdepasse5" not in o)
+p.call("paypal.php?action=capture", "POST", {"orderID": poid}); t("capture répétée : pas de 2e email", outbox().count("Bienvenue dans Éveil Intérieur") == 1)
+mode("declined"); q = C(); q.call("auth.php"); q.call("auth.php?action=register", "POST", {"name": "Quentin", "email": "quentin@x.fr", "password": "motdepasse6"})
+c, j = q.call("paypal.php?action=create", "POST", {}); q.call("paypal.php?action=capture", "POST", {"orderID": j["id"]}); mode("ok")
+t("paiement refusé => aucun email", "quentin@x.fr" not in outbox())
+
 print(f"\n{ok} OK, {fail} échec(s)"); sys.exit(1 if fail else 0)
