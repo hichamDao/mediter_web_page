@@ -57,13 +57,22 @@ function db(): PDO {
     static $pdo = null; global $CFG;
     if ($pdo) return $pdo;
     $d = db_settings($CFG['db'] ?? []);
+    $opts = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_TIMEOUT => 8];
     $dsn = 'mysql:host=' . trim((string)$d['host']) . ($d['port'] !== '' ? ';port=' . (int)$d['port'] : '') . ';dbname=' . trim((string)$d['name']) . ';charset=utf8mb4';
+    $user = trim((string)$d['user']); $pass = (string)$d['pass'];
     try {
-        $pdo = new PDO($dsn, trim((string)$d['user']), (string)$d['pass'],
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_TIMEOUT => 8]);
+        try { $pdo = new PDO($dsn, $user, $pass, $opts); }
+        catch (PDOException $e) {   // espace/retour à la ligne invisible collé avec le mot de passe : on réessaie sans
+            if ($pass === trim($pass) || !preg_match('/\[1045\]/', $e->getMessage())) throw $e;
+            $pdo = new PDO($dsn, $user, trim($pass), $opts);
+        }
     } catch (Throwable $e) {
         error_log('[db] ' . $e->getMessage());   // visible dans les journaux d'erreurs de l'hébergeur
-        $extra = !empty($CFG['debug']) ? ['detail' => $e->getMessage(), 'hint' => db_hint($e->getMessage())] : [];
+        $extra = [];
+        if (!empty($CFG['debug'])) $extra = ['detail' => $e->getMessage(), 'hint' => db_hint($e->getMessage()), 'config' => [
+            'host' => $d['host'], 'database' => $d['name'], 'user' => $user,
+            'passwordLength' => strlen($pass), 'passwordHasEdgeSpace' => $pass !== trim($pass),
+            'passwordHasQuoteOrBackslashOrDollar' => (bool)preg_match('/[\'"\\\\$]/', $pass)]];   // jamais le mot de passe lui-même
         fail('Connexion à la base de données impossible.', 500, $extra);
     }
     return $pdo;
