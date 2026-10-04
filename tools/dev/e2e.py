@@ -128,6 +128,7 @@ sql("update users set paid_at = NULL where email='nora@x.fr'"); t("acc√®s retir√
 
 
 print("Newsletter et emails")
+sql("delete from newsletter_subscribers")
 OUT = "/home/claude/mediter_web_page/api/private/outbox.log"
 def outbox(): 
     try: return open(OUT, encoding="utf-8").read()

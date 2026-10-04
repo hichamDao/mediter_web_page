@@ -35,16 +35,43 @@ function str(array $b, string $k, int $max, bool $required = false): string {
     return $v;
 }
 function client_ip(): string { return substr($_SERVER['REMOTE_ADDR'] ?? '', 0, 45); }
+/* Traduit l'erreur technique de MySQL en conseil clair (affiché uniquement si 'debug' => true dans config.php). */
+function db_hint(string $m): string {
+    if (stripos($m, 'could not find driver') !== false) return "L'extension PHP « pdo_mysql » n'est pas activée : activez-la dans les réglages PHP de l'hébergeur.";
+    if (preg_match('/to database|\[1044\]/i', $m)) return "Accès refusé à CETTE base : soit son nom est inexact (chez la plupart des hébergeurs il est préfixé, ex. d123456_eveil), soit l'utilisateur n'a pas les droits dessus (à lui accorder dans l'administration de la base). Si l'utilisateur et le mot de passe sont corrects, c'est l'une de ces deux causes.";
+    if (preg_match('/\[1049\]|Unknown database/i', $m)) return "Nom de base inconnu. Chez la plupart des hébergeurs le nom est préfixé (ex. d123456_eveil) : recopiez-le tel qu'affiché dans l'administration.";
+    if (preg_match('/\[1045\]|Access denied for user/i', $m)) return "Utilisateur ou mot de passe refusé. Vérifiez 'user' et 'pass' (copiez-collez-les, sans espace). Chez certains hébergeurs l'utilisateur est préfixé (ex. a123456_nom).";
+    if (preg_match('/getaddrinfo|php_network_getaddresses|nodename nor servname|Name or service not known/i', $m)) return "Le nom du serveur 'host' est introuvable. Utilisez exactement l'adresse du serveur MySQL indiquée dans l'administration de votre base (elle n'est souvent pas « localhost » sur un hébergement mutualisé).";
+    if (preg_match('/\[2002\]|\[2006\]|Connection refused|timed out|No such file/i', $m)) return "Impossible de joindre le serveur MySQL. Vérifiez 'host' (adresse indiquée par l'hébergeur, pas forcément « localhost ») et éventuellement 'port'.";
+    if (preg_match('/\[2054\]|authentication method/i', $m)) return "Méthode d'authentification MySQL non prise en charge par ce PHP : demandez à l'hébergeur ou recréez l'utilisateur avec mysql_native_password.";
+    return '';
+}
 function db(): PDO {
     static $pdo = null; global $CFG;
     if ($pdo) return $pdo;
-    $d = $CFG['db'];
+    $d = $CFG['db'] + ['host' => 'localhost', 'name' => '', 'user' => '', 'pass' => '', 'port' => ''];
+    $dsn = 'mysql:host=' . trim((string)$d['host']) . ($d['port'] !== '' ? ';port=' . (int)$d['port'] : '') . ';dbname=' . trim((string)$d['name']) . ';charset=utf8mb4';
     try {
-        $pdo = new PDO("mysql:host={$d['host']};dbname={$d['name']};charset=utf8mb4", $d['user'], $d['pass'],
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]);
-    } catch (Throwable $e) { fail('Connexion à la base de données impossible.', 500); }
+        $pdo = new PDO($dsn, trim((string)$d['user']), (string)$d['pass'],
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_TIMEOUT => 8]);
+    } catch (Throwable $e) {
+        error_log('[db] ' . $e->getMessage());   // visible dans les journaux d'erreurs de l'hébergeur
+        $extra = !empty($CFG['debug']) ? ['detail' => $e->getMessage(), 'hint' => db_hint($e->getMessage())] : [];
+        fail('Connexion à la base de données impossible.', 500, $extra);
+    }
     return $pdo;
 }
+/* Toute erreur non prévue : réponse JSON propre (jamais de trace PHP exposée), détail seulement en mode debug. */
+set_exception_handler(function (Throwable $e) {
+    global $CFG; error_log('[api] ' . get_class($e) . ' : ' . $e->getMessage());
+    $extra = [];
+    if (!empty($CFG['debug'])) {
+        $extra['detail'] = $e->getMessage();
+        if ($e instanceof PDOException && ($e->getCode() === '42S02' || stripos($e->getMessage(), "doesn't exist") !== false))
+            $extra['hint'] = "Tables absentes : importez database/schema.sql dans la base (phpMyAdmin → Importer), puis database/seed.sql si vous voulez les articles d'exemple.";
+    }
+    http_response_code(500); echo json_encode(['error' => 'Erreur serveur.'] + $extra, JSON_UNESCAPED_UNICODE); exit;
+});
 /* Protection CSRF : toute requête qui modifie des données doit renvoyer le jeton de session */
 if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD', 'OPTIONS'], true)) {
     if (!hash_equals($_SESSION['csrf'], (string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''))) fail('Jeton de sécurité invalide, rechargez la page.', 403);

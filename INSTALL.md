@@ -66,3 +66,10 @@ des dossiers « Module … » / « Vos 3 séances de coaching ».
 - **Production** : `mode` = `mail` utilise la messagerie de l'hébergeur. Utilisez une adresse `from` de VOTRE domaine, sinon les emails arrivent en spam. Pour un meilleur taux de livraison, configurez SPF/DKIM chez votre hébergeur.
 - **Local (Devserver)** : PHP n'a pas de serveur de messagerie. Mettez `'mode' => 'log'` : les emails sont écrits dans `api/private/outbox.log` au lieu d'être envoyés.
 - Liste des abonnés et export CSV : `admin.html` (compte administrateur).
+
+## Dépannage : « Connexion à la base de données impossible »
+1. Dans `api/config.php`, mettez `'debug' => true`.
+2. Ouvrez `https://votre-site/api/blog.php` dans le navigateur : la réponse affiche `detail` (erreur technique) et `hint` (conseil).
+3. Corrigez, rechargez, puis **remettez `'debug' => false`** (le détail ne doit jamais rester visible en production).
+- Sur un hébergement mutualisé, `host` n'est souvent **pas** `localhost` : utilisez l'adresse du serveur MySQL indiquée dans l'administration des bases de données. Le nom de la base et celui de l'utilisateur sont généralement préfixés (ex. `d123456_eveil`, `a123456_eveil`).
+- Il faut aussi **importer `database/schema.sql`** dans la base (phpMyAdmin → Importer) : une base vide donne l'erreur « Tables absentes ».

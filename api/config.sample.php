@@ -1,7 +1,7 @@
 <?php
 // Copiez ce fichier en config.php (jamais commité : il est dans .gitignore) puis remplissez vos valeurs.
 return [
-  'db' => ['host' => 'localhost', 'name' => 'eveil', 'user' => 'eveil_user', 'pass' => 'CHANGEZ_MOI'],
+  'db' => ['host' => 'localhost', 'name' => 'eveil', 'user' => 'eveil_user', 'pass' => 'CHANGEZ_MOI' /*, 'port' => 3306 */],
   'paypal' => [
     'mode' => 'sandbox',                       // 'live' en production
     'client_id' => '',                         // PayPal Developer > Apps & Credentials
@@ -17,6 +17,7 @@ return [
     'mode' => 'mail',                           // 'mail' = fonction mail() de PHP ; 'log' = écrit dans api/private/outbox.log (développement local)
     'from' => 'no-reply@votre-domaine.com',     // adresse d'expéditeur : utilisez une adresse de VOTRE domaine (sinon les emails finissent en spam)
   ],
+  'debug' => false,                             // true UNIQUEMENT pour diagnostiquer un problème de connexion (affiche la cause exacte) ; remettez false ensuite
   'contact_to' => 'contact@eveil-interieur.fr', // destinataire des messages du formulaire ('' = base de données seulement)
   'allowed_origin' => '',                       // seulement si le site et l'API sont sur des domaines différents
 ];
