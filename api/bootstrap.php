@@ -35,9 +35,16 @@ function str(array $b, string $k, int $max, bool $required = false): string {
     return $v;
 }
 function client_ip(): string { return substr($_SERVER['REMOTE_ADDR'] ?? '', 0, 45); }
+/* Accepte les noms de clés courants (password, username, database…) en plus de host/name/user/pass. */
+function db_settings(array $c): array {
+    $pick = function (array $keys, $default = '') use ($c) { foreach ($keys as $k) if (isset($c[$k]) && $c[$k] !== null) return $c[$k]; return $default; };
+    return ['host' => $pick(['host', 'hostname', 'server'], 'localhost'), 'name' => $pick(['name', 'dbname', 'database', 'db']),
+            'user' => $pick(['user', 'username', 'login']), 'pass' => $pick(['pass', 'password', 'passwd', 'pwd']), 'port' => $pick(['port'])];
+}
 /* Traduit l'erreur technique de MySQL en conseil clair (affiché uniquement si 'debug' => true dans config.php). */
 function db_hint(string $m): string {
     if (stripos($m, 'could not find driver') !== false) return "L'extension PHP « pdo_mysql » n'est pas activée : activez-la dans les réglages PHP de l'hébergeur.";
+    if (stripos($m, 'using password: NO') !== false && preg_match('/\\[1045\\]|Access denied/i', $m)) return "Aucun mot de passe n'a été envoyé à MySQL : la valeur 'pass' est vide ou absente dans api/config.php. La ligne doit être exactement : 'pass' => 'VOTRE_MOT_DE_PASSE' (entre apostrophes, avec la virgule à la fin). Le serveur et l'utilisateur, eux, sont atteints correctement.";
     if (preg_match('/to database|\[1044\]/i', $m)) return "Accès refusé à CETTE base : soit son nom est inexact (chez la plupart des hébergeurs il est préfixé, ex. d123456_eveil), soit l'utilisateur n'a pas les droits dessus (à lui accorder dans l'administration de la base). Si l'utilisateur et le mot de passe sont corrects, c'est l'une de ces deux causes.";
     if (preg_match('/\[1049\]|Unknown database/i', $m)) return "Nom de base inconnu. Chez la plupart des hébergeurs le nom est préfixé (ex. d123456_eveil) : recopiez-le tel qu'affiché dans l'administration.";
     if (preg_match('/\[1045\]|Access denied for user/i', $m)) return "Utilisateur ou mot de passe refusé. Vérifiez 'user' et 'pass' (copiez-collez-les, sans espace). Chez certains hébergeurs l'utilisateur est préfixé (ex. a123456_nom).";
@@ -49,7 +56,7 @@ function db_hint(string $m): string {
 function db(): PDO {
     static $pdo = null; global $CFG;
     if ($pdo) return $pdo;
-    $d = $CFG['db'] + ['host' => 'localhost', 'name' => '', 'user' => '', 'pass' => '', 'port' => ''];
+    $d = db_settings($CFG['db'] ?? []);
     $dsn = 'mysql:host=' . trim((string)$d['host']) . ($d['port'] !== '' ? ';port=' . (int)$d['port'] : '') . ';dbname=' . trim((string)$d['name']) . ';charset=utf8mb4';
     try {
         $pdo = new PDO($dsn, trim((string)$d['user']), (string)$d['pass'],
