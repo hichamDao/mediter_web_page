@@ -53,6 +53,18 @@ function db_hint(string $m): string {
     if (preg_match('/\[2054\]|authentication method/i', $m)) return "Méthode d'authentification MySQL non prise en charge par ce PHP : demandez à l'hébergeur ou recréez l'utilisateur avec mysql_native_password.";
     return '';
 }
+/* Mode debug : essaie les MÊMES identifiants sur d'autres adresses de serveur courantes, pour repérer un mauvais 'host'. */
+function db_try_hosts(array $d): array {
+    $res = []; $ok = null;
+    foreach (array_unique([trim((string)$d['host']), 'localhost', '127.0.0.1']) as $h) {
+        try {
+            $p = new PDO('mysql:host=' . $h . ($d['port'] !== '' ? ';port=' . (int)$d['port'] : '') . ';dbname=' . trim((string)$d['name']) . ';charset=utf8mb4', trim((string)$d['user']), trim((string)$d['pass']),
+                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 3]);
+            $res[$h] = 'OK'; $ok = $ok ?? $h;
+        } catch (Throwable $e) { preg_match('/\[(\d+)\]/', $e->getMessage(), $m); $res[$h] = 'refusé/erreur ' . ($m[1] ?? '?'); }
+    }
+    return [$res, $ok];
+}
 function db(): PDO {
     static $pdo = null; global $CFG;
     if ($pdo) return $pdo;
@@ -69,10 +81,10 @@ function db(): PDO {
     } catch (Throwable $e) {
         error_log('[db] ' . $e->getMessage());   // visible dans les journaux d'erreurs de l'hébergeur
         $extra = [];
-        if (!empty($CFG['debug'])) $extra = ['detail' => $e->getMessage(), 'hint' => db_hint($e->getMessage()), 'config' => [
+        if (!empty($CFG['debug'])) { [$tried, $okHost] = db_try_hosts($d); $extra = ['tried' => $tried] + ($okHost !== null && $okHost !== trim((string)$d['host']) ? ['hint2' => "Les MÊMES identifiants fonctionnent avec host = '$okHost' : mettez cette valeur dans 'host' de api/config.php."] : []) + ['detail' => $e->getMessage(), 'hint' => db_hint($e->getMessage()), 'config' => [
             'host' => $d['host'], 'database' => $d['name'], 'user' => $user,
             'passwordLength' => strlen($pass), 'passwordHasEdgeSpace' => $pass !== trim($pass),
-            'passwordHasQuoteOrBackslashOrDollar' => (bool)preg_match('/[\'"\\\\$]/', $pass)]];   // jamais le mot de passe lui-même
+            'passwordHasQuoteOrBackslashOrDollar' => (bool)preg_match('/[\'"\\\\$]/', $pass), 'passwordHasNonAscii' => (bool)preg_match('/[^\\x20-\\x7E]/', $pass), 'php' => PHP_VERSION]]; }   // jamais le mot de passe lui-même
         fail('Connexion à la base de données impossible.', 500, $extra);
     }
     return $pdo;
